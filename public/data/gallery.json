@@ -1,0 +1,8 @@
+{
+  "photos": [
+    { "id": "p-1", "src": "/gallery/couple-1.jpg", "caption": "", "category": "Selfies", "album": "Default" },
+    { "id": "p-2", "src": "/gallery/couple-2.jpg", "caption": "", "category": "Selfies", "album": "Default" }
+  ],
+  "albums": ["Default"],
+  "categories": ["Selfies", "Adventures", "Funny Moments", "Dates", "Random"]
+}

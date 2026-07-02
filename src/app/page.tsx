@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { LoadingScreen } from "@/components/shared/loading-screen";
 import { FloatingHearts } from "@/components/shared/floating-hearts";
 import { ParticleField } from "@/components/shared/particle-field";
@@ -21,49 +22,55 @@ import { DailyQuote } from "@/components/sections/daily-quote";
 import { FutureDreams } from "@/components/sections/future-dreams";
 import { Games } from "@/components/sections/games";
 import { Footer } from "@/components/sections/footer";
+import { ContentManager } from "@/components/content/content-manager";
 import { useBackgroundMusic } from "@/hooks/use-background-music";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [managerOpen, setManagerOpen] = useState(false);
   const { playing, toggle } = useBackgroundMusic();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const openManager = () => setManagerOpen(true);
+
   return (
     <main className="relative min-h-screen w-full overflow-x-hidden">
       {mounted && <LoadingScreen />}
 
-      {/* Persistent background layers */}
       <ParticleField />
       <FloatingHearts count={16} />
 
-      {/* Aurora ambient gradients */}
       <div className="pointer-events-none fixed inset-0 z-[-1] bg-aurora opacity-50 dark:opacity-70" />
       <div className="pointer-events-none fixed inset-0 z-[-1] bg-gradient-to-b from-rose-50/40 via-transparent to-rose-100/30 dark:from-rose-950/40 dark:via-transparent dark:to-rose-950/40" />
 
-      <Navigation />
+      <Navigation onOpenManager={openManager} />
 
-      <Hero onPlayMusic={toggle} musicPlaying={playing} />
+      <Hero onPlayMusic={toggle} musicPlaying={playing} onOpenManager={openManager} />
 
-      <OurStory />
-      <Gallery />
-      <MemoryWall />
-      <Timeline />
-      <BucketListSection />
-      <Reasons />
-      <Letters />
-      <Playlist />
+      <OurStory onOpenManager={openManager} />
+      <Gallery onOpenManager={openManager} />
+      <MemoryWall onOpenManager={openManager} />
+      <Timeline onOpenManager={openManager} />
+      <BucketListSection onOpenManager={openManager} />
+      <Reasons onOpenManager={openManager} />
+      <Letters onOpenManager={openManager} />
+      <Playlist onOpenManager={openManager} />
       <Streak />
       <CoupleCalendar />
-      <DailyQuote />
-      <FutureDreams />
+      <DailyQuote onOpenManager={openManager} />
+      <FutureDreams onOpenManager={openManager} />
       <Games />
 
       <Footer />
 
       <EasterEggs />
+
+      <AnimatePresence>
+        {managerOpen && <ContentManager onClose={() => setManagerOpen(false)} />}
+      </AnimatePresence>
     </main>
   );
 }

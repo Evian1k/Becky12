@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, X, Heart } from "lucide-react";
-import { loveLetters, type LoveLetter } from "@/data/letters";
+import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
+import { EmptyState } from "@/components/shared/empty-state";
 
-function Envelope({ letter, onOpen }: { letter: LoveLetter; onOpen: () => void }) {
+function Envelope({ letter, onOpen }: { letter: any; onOpen: () => void }) {
   const [opening, setOpening] = useState(false);
   return (
     <motion.button
@@ -15,28 +16,19 @@ function Envelope({ letter, onOpen }: { letter: LoveLetter; onOpen: () => void }
       viewport={{ once: true }}
       transition={{ duration: 0.7 }}
       whileHover={{ y: -6 }}
-      onClick={() => {
-        setOpening(true);
-        setTimeout(onOpen, 600);
-      }}
+      onClick={() => { setOpening(true); setTimeout(onOpen, 600); }}
       className="group relative h-56 w-full max-w-sm"
     >
-      {/* Envelope body */}
       <div className="absolute bottom-0 left-0 right-0 top-8 overflow-hidden rounded-lg bg-gradient-to-br from-rose-100 to-pink-100 shadow-lg dark:from-rose-900/40 dark:to-pink-900/40">
-        {/* diagonal flap */}
         <motion.div
           animate={{ rotateX: opening ? 180 : 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{ transformOrigin: "top" }}
-          className="absolute inset-x-0 top-0 h-0 w-0"
-          // triangle via borders
+          className="absolute inset-x-0 top-0"
         >
-          <div
-            className="absolute left-1/2 top-0 h-0 w-0 -translate-x-1/2 border-x-[110px] border-t-[80px] border-x-transparent border-t-rose-300 dark:border-t-rose-700"
-          />
+          <div className="absolute left-1/2 top-0 h-0 w-0 -translate-x-1/2 border-x-[110px] border-t-[80px] border-x-transparent border-t-rose-300 dark:border-t-rose-700" />
         </motion.div>
 
-        {/* Letter peeking out */}
         <motion.div
           animate={{ y: opening ? -120 : 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -44,19 +36,17 @@ function Envelope({ letter, onOpen }: { letter: LoveLetter; onOpen: () => void }
         >
           <p className="font-script text-base text-rose-600">{letter.recipient}</p>
           <p className="mt-1 text-[10px] text-gray-500">{letter.date}</p>
-          <p className="mt-2 text-xs italic text-gray-600">{letter.preview}</p>
+          {letter.preview && <p className="mt-2 text-xs italic text-gray-600">{letter.preview}</p>}
           <div className="absolute bottom-2 right-3">
             <Heart size={12} className="text-rose-400" fill="currentColor" strokeWidth={0} />
           </div>
         </motion.div>
 
-        {/* Bottom fold (triangle pointing down) */}
         <div className="absolute inset-x-0 bottom-0 h-12">
           <div className="absolute left-0 bottom-0 h-0 w-0 border-y-[40px] border-l-[100px] border-y-transparent border-l-rose-200 dark:border-l-rose-800/60" />
           <div className="absolute right-0 bottom-0 h-0 w-0 border-y-[40px] border-r-[100px] border-y-transparent border-r-rose-200 dark:border-r-rose-800/60" />
         </div>
 
-        {/* Wax seal */}
         {!opening && (
           <motion.div
             initial={{ scale: 0 }}
@@ -68,16 +58,11 @@ function Envelope({ letter, onOpen }: { letter: LoveLetter; onOpen: () => void }
           </motion.div>
         )}
       </div>
-
-      {/* Caption */}
-      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-rose-500 px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-white opacity-0 transition-opacity group-hover:opacity-100">
-        Click to open
-      </div>
     </motion.button>
   );
 }
 
-function LetterModal({ letter, onClose }: { letter: LoveLetter; onClose: () => void }) {
+function LetterModal({ letter, onClose }: { letter: any; onClose: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -94,58 +79,44 @@ function LetterModal({ letter, onClose }: { letter: LoveLetter; onClose: () => v
         onClick={(e) => e.stopPropagation()}
         className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto custom-scrollbar rounded-2xl bg-gradient-to-br from-rose-50 to-pink-50 p-8 shadow-2xl dark:from-rose-950/80 dark:to-pink-950/80 sm:p-12"
       >
-        <button
-          onClick={onClose}
-          aria-label="Close letter"
-          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-rose-500/10 text-rose-600 hover:bg-rose-500/20"
-        >
+        <button onClick={onClose} aria-label="Close letter" className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-rose-500/10 text-rose-600 hover:bg-rose-500/20">
           <X size={16} />
         </button>
-
-        <motion.div
+        <p className="font-script text-2xl text-rose-600 dark:text-rose-300">{letter.recipient}</p>
+        <p className="mt-1 text-xs uppercase tracking-wider text-rose-400">{letter.date}</p>
+        <div className="mt-6 space-y-4">
+          {letter.body.filter((p: string) => p.trim()).map((para: string, i: number) => (
+            <motion.p
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 + i * 0.15, duration: 0.5 }}
+              className="text-sm leading-relaxed text-gray-700 dark:text-rose-50/90 sm:text-base"
+              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+            >
+              {para}
+            </motion.p>
+          ))}
+        </div>
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.6 + letter.body.length * 0.15 + 0.2 }}
+          className="mt-8 font-script text-xl text-rose-600 dark:text-rose-300"
         >
-          <p className="font-script text-2xl text-rose-600 dark:text-rose-300">{letter.recipient}</p>
-          <p className="mt-1 text-xs uppercase tracking-wider text-rose-400">{letter.date}</p>
-
-          <div className="mt-6 space-y-4">
-            {letter.body.map((para, i) => (
-              <motion.p
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 + i * 0.15, duration: 0.5 }}
-                className="font-serif text-sm leading-relaxed text-gray-700 dark:text-rose-50/90 sm:text-base"
-                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-              >
-                {para}
-              </motion.p>
-            ))}
-          </div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 + letter.body.length * 0.15 + 0.2 }}
-            className="mt-8 font-script text-xl text-rose-600 dark:text-rose-300"
-          >
-            {letter.signature}
-            <br />
-            <span className="text-lg">Me</span>
-          </motion.p>
-
-          <div className="mt-6 flex justify-center">
-            <Heart size={20} className="text-rose-500 animate-heartbeat" fill="currentColor" strokeWidth={0} />
-          </div>
-        </motion.div>
+          {letter.signature}<br />
+          <span className="text-lg">Me</span>
+        </motion.p>
+        <div className="mt-6 flex justify-center">
+          <Heart size={20} className="text-rose-500 animate-heartbeat" fill="currentColor" strokeWidth={0} />
+        </div>
       </motion.div>
     </motion.div>
   );
 }
 
-export function Letters() {
+export function Letters({ onOpenManager }: { onOpenManager: () => void }) {
+  const letters = useContentStore((s) => s.letters);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
@@ -156,20 +127,34 @@ export function Letters() {
         subtitle="Tap an envelope to read a letter written just for you."
       />
 
-      <div className="mt-14 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-        {loveLetters.map((l, i) => (
-          <Envelope key={l.id} letter={l} onOpen={() => setOpenIndex(i)} />
-        ))}
-      </div>
+      {letters.length === 0 ? (
+        <div className="mt-14">
+          <EmptyState
+            title="No letters yet"
+            description="Write your first love letter — a heartfelt message that opens with an envelope animation."
+            action="Write Your First Letter"
+            onAction={onOpenManager}
+            icon={<Mail size={26} />}
+          />
+        </div>
+      ) : (
+        <div className="mt-14 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+          {letters.map((l, i) => (
+            <Envelope key={l.id} letter={l} onOpen={() => setOpenIndex(i)} />
+          ))}
+        </div>
+      )}
 
-      <div className="mt-12 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <Mail size={14} />
-        <span>Each envelope holds a piece of my heart.</span>
-      </div>
+      {letters.length > 0 && (
+        <div className="mt-12 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <Mail size={14} />
+          <span>Each envelope holds a piece of my heart.</span>
+        </div>
+      )}
 
       <AnimatePresence>
-        {openIndex !== null && (
-          <LetterModal letter={loveLetters[openIndex]} onClose={() => setOpenIndex(null)} />
+        {openIndex !== null && letters[openIndex] && (
+          <LetterModal letter={letters[openIndex]} onClose={() => setOpenIndex(null)} />
         )}
       </AnimatePresence>
     </SectionWrapper>

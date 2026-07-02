@@ -3,9 +3,32 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RotateCcw, Trophy, Heart } from "lucide-react";
-import { memoryGameCards, loveQuizQuestions, wouldYouRather } from "@/data/games";
 import { fireConfetti } from "@/lib/confetti-helpers";
 import { cn } from "@/lib/utils";
+
+// Static game data — these are game mechanics, not user-editable content.
+const memoryGameCards = ["❤️", "💕", "💖", "💗", "💓", "💞", "💘", "💝"];
+
+const loveQuizQuestions: { question: string; options: string[]; answer: number }[] = [
+  { question: "Where did we first meet?", options: ["Online", "Through friends", "At work", "By chance"], answer: 0 },
+  { question: "What's our favorite thing to do together?", options: ["Travel", "Cook", "Movie nights", "All of the above"], answer: 3 },
+  { question: "How do we resolve disagreements?", options: ["Talk it out", "Give space", "Compromise", "All of the above"], answer: 3 },
+  { question: "What's my love language?", options: ["Words", "Gifts", "Touch", "Quality time"], answer: 3 },
+  { question: "Where do I want to travel next?", options: ["Beach", "Mountains", "City", "Anywhere with you"], answer: 3 },
+];
+
+const wouldYouRather: { optionA: string; optionB: string }[] = [
+  { optionA: "Hold hands forever", optionB: "Cuddle forever" },
+  { optionA: "Travel the world together", optionB: "Build a cozy home together" },
+  { optionA: "Always know what I'm thinking", optionB: "Always know what you're thinking" },
+  { optionA: "Slow dance every night", optionB: "Cook dinner together every night" },
+  { optionA: "Re-live our first date", optionB: "Fast-forward to our wedding" },
+  { optionA: "A million dollars", optionB: "A million more days with you" },
+  { optionA: "Watch the sunset together every day", optionB: "Watch the sunrise together every day" },
+  { optionA: "Read each other's minds", optionB: "Feel each other's feelings" },
+  { optionA: "Beach vacation", optionB: "Mountain cabin getaway" },
+  { optionA: "Cook for me", optionB: "I cook for you" },
+];
 
 type Card = { id: number; emoji: string; flipped: boolean; matched: boolean };
 

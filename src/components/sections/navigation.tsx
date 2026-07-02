@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Heart } from "lucide-react";
+import { Menu, X, Heart, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,7 @@ const links = [
   { id: "future", label: "Future" },
 ];
 
-export function Navigation() {
+export function Navigation({ onOpenManager }: { onOpenManager: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("home");
@@ -28,7 +28,6 @@ export function Navigation() {
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 60);
-      // Track active section
       const offsets = links
         .map((l) => {
           const el = document.getElementById(l.id);
@@ -46,9 +45,7 @@ export function Navigation() {
 
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     setOpen(false);
   };
 
@@ -64,7 +61,6 @@ export function Navigation() {
         )}
       >
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Logo */}
           <button
             onClick={() => scrollTo("home")}
             className="glass flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium"
@@ -73,7 +69,6 @@ export function Navigation() {
             <span className="font-script text-lg">Our Forever</span>
           </button>
 
-          {/* Desktop nav */}
           <div
             className={cn(
               "hidden items-center gap-1 rounded-full px-2 py-1.5 lg:flex transition-all duration-500",
@@ -86,9 +81,7 @@ export function Navigation() {
                 onClick={() => scrollTo(l.id)}
                 className={cn(
                   "relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                  active === l.id
-                    ? "text-white"
-                    : "text-foreground/70 hover:text-foreground"
+                  active === l.id ? "text-white" : "text-foreground/70 hover:text-foreground"
                 )}
               >
                 {active === l.id && (
@@ -103,8 +96,15 @@ export function Navigation() {
             ))}
           </div>
 
-          {/* Right controls */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={onOpenManager}
+              aria-label="Open Content Manager"
+              className="glass flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-500/10"
+            >
+              <Settings size={12} />
+              <span className="hidden sm:inline">Edit</span>
+            </button>
             <ThemeToggle />
             <button
               onClick={() => setOpen((o) => !o)}
@@ -117,7 +117,6 @@ export function Navigation() {
         </nav>
       </motion.header>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -126,10 +125,7 @@ export function Navigation() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[99] lg:hidden"
           >
-            <div
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-              onClick={() => setOpen(false)}
-            />
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
             <motion.div
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}

@@ -1,0 +1,14 @@
+{
+  "title": "Our Forever",
+  "subtitle": "Our story is still being written...",
+  "partner1": "",
+  "partner2": "",
+  "anniversaryDate": "",
+  "madeBy": "Made with ❤️",
+  "finalMessage": "No matter where life takes us, this little corner of the internet will always belong to us. ❤️",
+  "accentColor": "#ff4d6d",
+  "heroPhotos": [
+    { "id": "hero-1", "src": "/gallery/couple-1.jpg", "caption": "" },
+    { "id": "hero-2", "src": "/gallery/couple-2.jpg", "caption": "" }
+  ]
+}

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Playfair_Display, Dancing_Script } from "next/font/g
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ContentProvider } from "@/components/content-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,14 +29,10 @@ const dancing = Dancing_Script({
 });
 
 export const metadata: Metadata = {
-  title: "Our Forever ❤️ — A Love Story",
-  description: "A little corner of the internet that belongs to us. Our story, our memories, our forever.",
-  keywords: ["love", "forever", "couple", "our story", "memories", "romance"],
-  authors: [{ name: "Made with ❤️" }],
-  openGraph: {
-    title: "Our Forever ❤️",
-    description: "A little corner of the internet that belongs to us.",
-    type: "website",
+  title: "Our Forever ❤️",
+  description: "A little corner of the internet that belongs to us.",
+  icons: {
+    icon: "/logo.svg",
   },
 };
 
@@ -61,8 +58,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange={false}
         >
-          {children}
-          <Toaster />
+          <ContentProvider>
+            {children}
+            <Toaster />
+          </ContentProvider>
         </ThemeProvider>
       </body>
     </html>

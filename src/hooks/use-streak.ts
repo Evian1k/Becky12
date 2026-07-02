@@ -65,8 +65,10 @@ export function useStreak(anniversaryDate: string) {
         }
         setState(parsed);
       } else {
-        // Initialize daysTogether from anniversary
-        const days = Math.max(0, dayDiff(anniversaryDate.slice(0, 10), todayStr()));
+        // Initialize daysTogether from anniversary (if set)
+        const days = anniversaryDate
+          ? Math.max(0, dayDiff(anniversaryDate.slice(0, 10), todayStr()))
+          : 0;
         setState({ ...initialState, daysTogether: days });
       }
     } catch {

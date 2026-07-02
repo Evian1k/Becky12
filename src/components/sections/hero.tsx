@@ -2,18 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Play, Pause, Music2, ChevronDown } from "lucide-react";
-import { coupleConfig } from "@/data/couple-config";
+import { Heart, Play, Pause, Music2, ChevronDown, Settings } from "lucide-react";
+import { useContentStore } from "@/lib/content-store";
 import { useRelationshipCounter } from "@/hooks/use-relationship-counter";
 import { fireHearts } from "@/lib/confetti-helpers";
-
-const slideshow = [
-  "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=1920&h=1080&fit=crop",
-  "https://images.unsplash.com/photo-1517248135467-4c7edcad5c4c?w=1920&h=1080&fit=crop",
-  "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1920&h=1080&fit=crop",
-  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1920&h=1080&fit=crop",
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&h=1080&fit=crop",
-];
 
 const typewriterPhrases = [
   "Our story is still being written...",
@@ -22,12 +14,14 @@ const typewriterPhrases = [
   "In a sea of people, my eyes will always search for you...",
 ];
 
-function Typewriter() {
+function Typewriter({ subtitle }: { subtitle: string }) {
   const [phrase, setPhrase] = useState(0);
   const [text, setText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
+    // If a custom subtitle is provided, skip the typewriter effect.
+    if (subtitle) return;
     const full = typewriterPhrases[phrase];
     let timeout: ReturnType<typeof setTimeout>;
     if (!deleting && text === full) {
@@ -46,7 +40,12 @@ function Typewriter() {
       );
     }
     return () => clearTimeout(timeout);
-  }, [text, deleting, phrase]);
+  }, [text, deleting, phrase, subtitle]);
+
+  // If the user provided a subtitle in Settings, show it as a static line.
+  if (subtitle) {
+    return <span className="inline-block">{subtitle}</span>;
+  }
 
   return (
     <span className="inline-block min-h-[1.5em]">
@@ -75,16 +74,36 @@ function CounterUnit({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function Hero({ onPlayMusic, musicPlaying }: { onPlayMusic: () => void; musicPlaying: boolean }) {
-  const { duration, now } = useRelationshipCounter(coupleConfig.anniversaryDate);
+export function Hero({
+  onPlayMusic,
+  musicPlaying,
+  onOpenManager,
+}: {
+  onPlayMusic: () => void;
+  musicPlaying: boolean;
+  onOpenManager: () => void;
+}) {
+  const settings = useContentStore((s) => s.settings);
+  // Use a stable empty-string fallback when anniversary is not set; the
+  // useRelationshipCounter hook handles empty strings gracefully and we
+  // only show the counter when settings.anniversaryDate is truthy.
+  const anniversary = settings.anniversaryDate || "";
+  const { duration, now } = useRelationshipCounter(anniversary);
   const [slide, setSlide] = useState(0);
 
+  const slideshow = settings.heroPhotos.length
+    ? settings.heroPhotos
+    : [{ id: "default", src: "/gallery/couple-1.jpg", caption: "" }];
+
   useEffect(() => {
+    if (slideshow.length <= 1) return;
     const id = setInterval(() => {
       setSlide((s) => (s + 1) % slideshow.length);
     }, 5500);
     return () => clearInterval(id);
-  }, []);
+  }, [slideshow.length]);
+
+  const hasAnniversary = Boolean(settings.anniversaryDate);
 
   return (
     <section id="home" className="relative h-screen min-h-[700px] w-full overflow-hidden">
@@ -101,8 +120,8 @@ export function Hero({ onPlayMusic, musicPlaying }: { onPlayMusic: () => void; m
           >
             { }
             <img
-              src={slideshow[slide]}
-              alt="Us"
+              src={slideshow[slide].src}
+              alt={slideshow[slide].caption || "Us"}
               className="h-full w-full object-cover"
               loading="eager"
             />
@@ -133,7 +152,7 @@ export function Hero({ onPlayMusic, musicPlaying }: { onPlayMusic: () => void; m
           transition={{ delay: 0.5, duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
           className="font-script text-7xl leading-none text-white drop-shadow-2xl sm:text-8xl md:text-9xl"
         >
-          Our Forever
+          {settings.title || "Our Forever"}
           <span className="ml-2 inline-block animate-heartbeat text-rose-500">❤️</span>
         </motion.h1>
 
@@ -143,7 +162,7 @@ export function Hero({ onPlayMusic, musicPlaying }: { onPlayMusic: () => void; m
           transition={{ delay: 1, duration: 1 }}
           className="mt-4 max-w-xl text-base text-rose-100/90 sm:text-lg"
         >
-          <Typewriter />
+          <Typewriter subtitle={settings.subtitle} />
         </motion.p>
 
         {/* Live date & time */}
@@ -165,39 +184,58 @@ export function Hero({ onPlayMusic, musicPlaying }: { onPlayMusic: () => void; m
           </motion.div>
         )}
 
-        {/* Counter */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 1 }}
-          className="mt-10 flex flex-col items-center"
-        >
-          <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-rose-300/80">
-            <Heart size={12} fill="currentColor" strokeWidth={0} className="animate-heartbeat" />
-            Together for
-            <Heart size={12} fill="currentColor" strokeWidth={0} className="animate-heartbeat" />
-          </div>
-          <div className="glass-strong flex items-center gap-4 rounded-3xl px-6 py-5 sm:gap-6 sm:px-10">
-            {duration && (
-              <>
-                <CounterUnit value={duration.years} label="Years" />
-                <span className="text-2xl text-rose-400/40">·</span>
-                <CounterUnit value={duration.months} label="Months" />
-                <span className="text-2xl text-rose-400/40">·</span>
-                <CounterUnit value={duration.days} label="Days" />
-                <span className="text-2xl text-rose-400/40">·</span>
-                <CounterUnit value={duration.hours} label="Hours" />
-                <span className="text-2xl text-rose-400/40">·</span>
-                <CounterUnit value={duration.minutes} label="Min" />
-                <span className="text-2xl text-rose-400/40">·</span>
-                <CounterUnit value={duration.seconds} label="Sec" />
-              </>
-            )}
-          </div>
-          <p className="mt-3 text-xs text-rose-200/50">
-            {duration?.totalDays.toLocaleString()} days of us — and counting.
-          </p>
-        </motion.div>
+        {/* Counter — only show if anniversary is set */}
+        {hasAnniversary && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.5, duration: 1 }}
+            className="mt-10 flex flex-col items-center"
+          >
+            <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-rose-300/80">
+              <Heart size={12} fill="currentColor" strokeWidth={0} className="animate-heartbeat" />
+              Together for
+              <Heart size={12} fill="currentColor" strokeWidth={0} className="animate-heartbeat" />
+            </div>
+            <div className="glass-strong flex items-center gap-4 rounded-3xl px-6 py-5 sm:gap-6 sm:px-10">
+              {duration && (
+                <>
+                  <CounterUnit value={duration.years} label="Years" />
+                  <span className="text-2xl text-rose-400/40">·</span>
+                  <CounterUnit value={duration.months} label="Months" />
+                  <span className="text-2xl text-rose-400/40">·</span>
+                  <CounterUnit value={duration.days} label="Days" />
+                  <span className="text-2xl text-rose-400/40">·</span>
+                  <CounterUnit value={duration.hours} label="Hours" />
+                  <span className="text-2xl text-rose-400/40">·</span>
+                  <CounterUnit value={duration.minutes} label="Min" />
+                  <span className="text-2xl text-rose-400/40">·</span>
+                  <CounterUnit value={duration.seconds} label="Sec" />
+                </>
+              )}
+            </div>
+            <p className="mt-3 text-xs text-rose-200/50">
+              {duration?.totalDays.toLocaleString()} days of us — and counting.
+            </p>
+          </motion.div>
+        )}
+
+        {/* Set anniversary prompt */}
+        {!hasAnniversary && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.5, duration: 1 }}
+            className="mt-8"
+          >
+            <button
+              onClick={onOpenManager}
+              className="glass rounded-full px-5 py-2.5 text-sm text-rose-200/80 hover:text-white"
+            >
+              Set your anniversary in Content Manager →
+            </button>
+          </motion.div>
+        )}
 
         {/* Music play button */}
         <motion.div
@@ -224,18 +262,20 @@ export function Hero({ onPlayMusic, musicPlaying }: { onPlayMusic: () => void; m
       </div>
 
       {/* Slide indicators */}
-      <div className="absolute bottom-24 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-        {slideshow.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setSlide(i)}
-            aria-label={`Slide ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all ${
-              i === slide ? "w-8 bg-rose-400" : "w-1.5 bg-white/40 hover:bg-white/70"
-            }`}
-          />
-        ))}
-      </div>
+      {slideshow.length > 1 && (
+        <div className="absolute bottom-24 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+          {slideshow.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setSlide(i)}
+              aria-label={`Slide ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all ${
+                i === slide ? "w-8 bg-rose-400" : "w-1.5 bg-white/40 hover:bg-white/70"
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Scroll cue */}
       <motion.div
@@ -253,6 +293,18 @@ export function Hero({ onPlayMusic, musicPlaying }: { onPlayMusic: () => void; m
           <ChevronDown size={16} />
         </motion.div>
       </motion.div>
+
+      {/* Quick access to content manager */}
+      <motion.button
+        onClick={onOpenManager}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2.5, duration: 0.8 }}
+        className="glass absolute right-4 top-24 z-10 flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium text-rose-200/80 hover:text-white sm:right-6"
+      >
+        <Settings size={12} />
+        Edit Content
+      </motion.button>
     </section>
   );
 }

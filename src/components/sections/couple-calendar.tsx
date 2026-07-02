@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
-import { coupleConfig } from "@/data/couple-config";
+import { useContentStore } from "@/lib/content-store";
 import { useStreak } from "@/hooks/use-streak";
 import { useMounted } from "@/hooks/use-mounted";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
@@ -52,10 +52,15 @@ const monthLabels = (days: { date: Date }[]) => {
 
 export function CoupleCalendar() {
   const mounted = useMounted();
-  const { state, hydrated } = useStreak(coupleConfig.anniversaryDate);
+  const settings = useContentStore((s) => s.settings);
+  const anniversary = settings.anniversaryDate || "";
+  const { state, hydrated } = useStreak(anniversary);
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const days = useMemo(() => buildCalendarDays(coupleConfig.anniversaryDate, 9), []);
+  const days = useMemo(
+    () => buildCalendarDays(anniversary || new Date().toISOString(), 9),
+    [anniversary]
+  );
   const labels = useMemo(() => monthLabels(days), [days]);
 
   const checkInSet = useMemo(() => new Set(state.checkIns), [state.checkIns]);

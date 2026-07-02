@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Flame, Heart, Camera, Mail, TrendingUp, Calendar } from "lucide-react";
 import { useStreak } from "@/hooks/use-streak";
-import { coupleConfig } from "@/data/couple-config";
+import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { cn } from "@/lib/utils";
 import { fireConfetti } from "@/lib/confetti-helpers";
@@ -74,7 +74,11 @@ function ActionButton({
 
 export function Streak() {
   const mounted = useMounted();
-  const { state, hydrated, checkIn, addMemory, sendLove } = useStreak(coupleConfig.anniversaryDate);
+  const settings = useContentStore((s) => s.settings);
+  // Use a stable empty-string fallback when anniversary is not set so the
+  // useEffect inside useStreak doesn't run on every render.
+  const anniversary = settings.anniversaryDate || "";
+  const { state, hydrated, checkIn, addMemory, sendLove } = useStreak(anniversary);
 
   const handleCheckIn = () => {
     if (checkIn()) {

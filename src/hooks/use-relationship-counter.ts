@@ -45,7 +45,15 @@ export function useRelationshipCounter(anniversaryDate: string) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
+    // If no anniversary is set, still tick the clock but don't compute a duration.
+    if (!anniversaryDate) {
+      const update = () => setNow(new Date());
+      update();
+      const id = setInterval(update, 1000);
+      return () => clearInterval(id);
+    }
     const from = new Date(anniversaryDate);
+    if (isNaN(from.getTime())) return;
     const update = () => {
       const nowDate = new Date();
       setDuration(computeDuration(from, nowDate));
