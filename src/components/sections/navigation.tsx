@@ -2,28 +2,36 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Heart, Settings } from "lucide-react";
+import { Menu, X, Heart, Settings, LogOut, User as UserIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { GlobalSearch } from "@/components/shared/global-search";
+import { NotificationsBell } from "@/components/shared/notifications-bell";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
 const links = [
   { id: "home", label: "Home" },
-  { id: "story", label: "Our Story" },
   { id: "gallery", label: "Gallery" },
-  { id: "memories", label: "Memories" },
+  { id: "videos", label: "Videos" },
   { id: "timeline", label: "Timeline" },
-  { id: "bucket-list", label: "Bucket List" },
-  { id: "reasons", label: "Reasons I Love You" },
+  { id: "journal", label: "Journal" },
   { id: "letters", label: "Letters" },
   { id: "playlist", label: "Playlist" },
+  { id: "quotes", label: "Quotes" },
+  { id: "bucket-list", label: "Bucket List" },
+  { id: "calendar", label: "Calendar" },
+  { id: "places", label: "Places" },
+  { id: "achievements", label: "Achievements" },
   { id: "games", label: "Games" },
-  { id: "future", label: "Future" },
+  { id: "profile", label: "Profile" },
+  { id: "settings", label: "Settings" },
 ];
 
-export function Navigation({ onOpenManager }: { onOpenManager: () => void }) {
+export function Navigation({ onOpenManager, onSignOut }: { onOpenManager: () => void; onSignOut: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("home");
+  const { user } = useAuth();
 
   useEffect(() => {
     const onScroll = () => {
@@ -54,11 +62,8 @@ export function Navigation({ onOpenManager }: { onOpenManager: () => void }) {
       <motion.header
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 2.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className={cn(
-          "fixed inset-x-0 top-0 z-[100] transition-all duration-500",
-          scrolled ? "py-3" : "py-5"
-        )}
+        transition={{ delay: 0.3, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        className={cn("fixed inset-x-0 top-0 z-[100] transition-all duration-500", scrolled ? "py-3" : "py-5")}
       >
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <button
@@ -69,13 +74,8 @@ export function Navigation({ onOpenManager }: { onOpenManager: () => void }) {
             <span className="font-script text-lg">Our Forever</span>
           </button>
 
-          <div
-            className={cn(
-              "hidden items-center gap-1 rounded-full px-2 py-1.5 lg:flex transition-all duration-500",
-              scrolled ? "glass" : "glass-strong"
-            )}
-          >
-            {links.map((l) => (
+          <div className={cn("hidden items-center gap-1 rounded-full px-2 py-1.5 xl:flex transition-all duration-500", scrolled ? "glass" : "glass-strong")}>
+            {links.slice(0, 12).map((l) => (
               <button
                 key={l.id}
                 onClick={() => scrollTo(l.id)}
@@ -97,19 +97,31 @@ export function Navigation({ onOpenManager }: { onOpenManager: () => void }) {
           </div>
 
           <div className="flex items-center gap-2">
+            <GlobalSearch />
+            <NotificationsBell />
             <button
               onClick={onOpenManager}
               aria-label="Open Content Manager"
-              className="glass flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-500/10"
+              className="glass hidden h-10 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-rose-500 hover:bg-rose-500/10 sm:flex"
             >
               <Settings size={12} />
-              <span className="hidden sm:inline">Edit</span>
+              Edit
             </button>
+            {user && (
+              <button
+                onClick={onSignOut}
+                aria-label="Sign out"
+                className="glass grid h-10 w-10 place-items-center rounded-full text-foreground/80 hover:text-red-500"
+                title="Sign out"
+              >
+                <LogOut size={14} />
+              </button>
+            )}
             <ThemeToggle />
             <button
               onClick={() => setOpen((o) => !o)}
               aria-label="Open menu"
-              className="glass grid h-10 w-10 place-items-center rounded-full lg:hidden"
+              className="glass grid h-10 w-10 place-items-center rounded-full xl:hidden"
             >
               {open ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -123,7 +135,7 @@ export function Navigation({ onOpenManager }: { onOpenManager: () => void }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99] lg:hidden"
+            className="fixed inset-0 z-[99] xl:hidden"
           >
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
             <motion.div
@@ -131,27 +143,47 @@ export function Navigation({ onOpenManager }: { onOpenManager: () => void }) {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
               transition={{ ease: [0.22, 1, 0.36, 1] }}
-              className="glass-strong absolute inset-x-4 top-24 rounded-3xl p-4"
+              className="glass-strong absolute inset-x-4 top-24 max-h-[80vh] overflow-y-auto rounded-3xl p-4 custom-scrollbar"
             >
+              {user && (
+                <div className="mb-3 flex items-center gap-3 rounded-2xl bg-rose-500/10 p-3">
+                  <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white">
+                    {user.avatar ? (
+                       
+                      <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <UserIcon size={16} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-sm font-medium">{user.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 {links.map((l, i) => (
                   <motion.button
                     key={l.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04 }}
+                    transition={{ delay: i * 0.03 }}
                     onClick={() => scrollTo(l.id)}
                     className={cn(
                       "rounded-2xl px-4 py-3 text-left text-sm font-medium transition-colors",
-                      active === l.id
-                        ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
-                        : "bg-white/5 hover:bg-white/10"
+                      active === l.id ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white" : "bg-white/5 hover:bg-white/10"
                     )}
                   >
                     {l.label}
                   </motion.button>
                 ))}
               </div>
+              <button
+                onClick={() => { onOpenManager(); setOpen(false); }}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-500"
+              >
+                <Settings size={14} /> Content Manager
+              </button>
             </motion.div>
           </motion.div>
         )}

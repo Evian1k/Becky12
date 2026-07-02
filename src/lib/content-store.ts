@@ -18,20 +18,12 @@ import type {
   Place,
   Note,
   Video,
+  JournalEntry,
+  Notification,
+  Achievement,
   Settings,
 } from "@/lib/types";
 import { makeId } from "@/hooks/use-json-data";
-
-/**
- * In-memory content store. Holds all editable content for the current session.
- *
- * Initial state is loaded from the JSON files in /public/data/ via the
- * ContentProvider on mount. After that, all edits (add/edit/delete/reorder)
- * happen in-memory; they are also mirrored to LocalStorage so that the
- * session survives page refreshes. To make edits permanent across devices,
- * a future backend can be plugged in by replacing the persist() storage
- * engine — the React UI does not need to change.
- */
 
 const emptyGallery: GalleryData = {
   photos: [
@@ -56,10 +48,36 @@ const emptySettings: Settings = {
     { id: "hero-1", src: "/gallery/couple-1.jpg", caption: "" },
     { id: "hero-2", src: "/gallery/couple-2.jpg", caption: "" },
   ],
+  themeColor: "#ff4d6d",
+  animationsEnabled: true,
+  musicEnabled: true,
+  notificationsEnabled: true,
+  floatingHeartsEnabled: true,
+  particlesEnabled: true,
 };
 
+const defaultAchievements: Achievement[] = [
+  { id: "ach-1", title: "First Photo", description: "Upload your first photo together", emoji: "📸", unlockedAt: null, progress: 0, target: 1 },
+  { id: "ach-2", title: "Centenarian", description: "Upload 100 photos", emoji: "💯", unlockedAt: null, progress: 0, target: 100 },
+  { id: "ach-3", title: "First Letter", description: "Write your first love letter", emoji: "💌", unlockedAt: null, progress: 0, target: 1 },
+  { id: "ach-4", title: "First Song", description: "Add your first song to the playlist", emoji: "🎵", unlockedAt: null, progress: 0, target: 1 },
+  { id: "ach-5", title: "DJ Couple", description: "Upload 50 songs together", emoji: "🎧", unlockedAt: null, progress: 0, target: 50 },
+  { id: "ach-6", title: "First Memory", description: "Add your first timeline memory", emoji: "✨", unlockedAt: null, progress: 0, target: 1 },
+  { id: "ach-7", title: "Storyteller", description: "Write 10 timeline memories", emoji: "📖", unlockedAt: null, progress: 0, target: 10 },
+  { id: "ach-8", title: "First Quote", description: "Add your first love quote", emoji: "💬", unlockedAt: null, progress: 0, target: 1 },
+  { id: "ach-9", title: "100 Love Notes", description: "Write 100 reasons you love each other", emoji: "❤️", unlockedAt: null, progress: 0, target: 100 },
+  { id: "ach-10", title: "First Video", description: "Upload your first video", emoji: "🎥", unlockedAt: null, progress: 0, target: 1 },
+  { id: "ach-11", title: "First Place", description: "Add the first place you visited together", emoji: "📍", unlockedAt: null, progress: 0, target: 1 },
+  { id: "ach-12", title: "Globetrotters", description: "Visit 10 places together", emoji: "🌍", unlockedAt: null, progress: 0, target: 10 },
+  { id: "ach-13", title: "Bucket List Done", description: "Complete your entire bucket list", emoji: "🏆", unlockedAt: null, progress: 0, target: 1 },
+  { id: "ach-14", title: "Journal Keeper", description: "Write 30 journal entries", emoji: "📔", unlockedAt: null, progress: 0, target: 30 },
+  { id: "ach-15", title: "7-Day Streak", description: "Keep a 7-day streak alive", emoji: "🔥", unlockedAt: null, progress: 0, target: 7 },
+  { id: "ach-16", title: "30-Day Streak", description: "Keep a 30-day streak alive", emoji: "⚡", unlockedAt: null, progress: 0, target: 30 },
+  { id: "ach-17", title: "365-Day Streak", description: "Keep a 365-day streak alive", emoji: "👑", unlockedAt: null, progress: 0, target: 365 },
+  { id: "ach-18", title: "First Journal", description: "Write your first journal entry", emoji: "✏️", unlockedAt: null, progress: 0, target: 1 },
+];
+
 type ContentState = {
-  // Data
   settings: Settings;
   gallery: GalleryData;
   timeline: TimelineEvent[];
@@ -74,76 +92,92 @@ type ContentState = {
   places: Place[];
   notes: Note[];
   videos: Video[];
+  journal: JournalEntry[];
+  notifications: Notification[];
+  achievements: Achievement[];
 
-  // Loading
   loaded: boolean;
 
-  // Actions — Settings
+  // Settings
   setSettings: (patch: Partial<Settings>) => void;
 
-  // Actions — Gallery
+  // Gallery
   addPhoto: (photo: Omit<Photo, "id">) => void;
   addPhotos: (photos: Omit<Photo, "id">[]) => void;
   updatePhoto: (id: string, patch: Partial<Photo>) => void;
   removePhoto: (id: string) => void;
   reorderPhotos: (fromId: string, toId: string) => void;
 
-  // Actions — Timeline
+  // Timeline
   addTimelineEvent: (e: Omit<TimelineEvent, "id">) => void;
   updateTimelineEvent: (id: string, patch: Partial<TimelineEvent>) => void;
   removeTimelineEvent: (id: string) => void;
   reorderTimeline: (fromId: string, toId: string) => void;
 
-  // Actions — Letters
+  // Letters
   addLetter: (l: Omit<LoveLetter, "id">) => void;
   updateLetter: (id: string, patch: Partial<LoveLetter>) => void;
   removeLetter: (id: string) => void;
 
-  // Actions — Playlist
+  // Playlist
   addSong: (s: Omit<Song, "id">) => void;
   updateSong: (id: string, patch: Partial<Song>) => void;
   removeSong: (id: string) => void;
   setOurSong: (id: string | null) => void;
 
-  // Actions — Quotes
+  // Quotes
   addQuote: (q: Omit<Quote, "id">) => void;
   updateQuote: (id: string, patch: Partial<Quote>) => void;
   removeQuote: (id: string) => void;
 
-  // Actions — Bucket List
+  // Bucket List
   addBucketItem: (b: Omit<BucketItem, "id">) => void;
   updateBucketItem: (id: string, patch: Partial<BucketItem>) => void;
   removeBucketItem: (id: string) => void;
 
-  // Actions — Future Dreams
+  // Future Dreams
   addDream: (d: Omit<FutureDream, "id">) => void;
   updateDream: (id: string, patch: Partial<FutureDream>) => void;
   removeDream: (id: string) => void;
 
-  // Actions — Reasons
+  // Reasons
   addReason: (r: Omit<Reason, "id">) => void;
   updateReason: (id: string, patch: Partial<Reason>) => void;
   removeReason: (id: string) => void;
 
-  // Actions — Special Dates
+  // Special Dates
   addSpecialDate: (d: Omit<SpecialDate, "id">) => void;
   updateSpecialDate: (id: string, patch: Partial<SpecialDate>) => void;
   removeSpecialDate: (id: string) => void;
 
-  // Actions — Places
+  // Places
   addPlace: (p: Omit<Place, "id">) => void;
   updatePlace: (id: string, patch: Partial<Place>) => void;
   removePlace: (id: string) => void;
 
-  // Actions — Notes
+  // Notes
   addNote: (n: Omit<Note, "id">) => void;
   updateNote: (id: string, patch: Partial<Note>) => void;
   removeNote: (id: string) => void;
 
-  // Actions — Videos
+  // Videos
   addVideo: (v: Omit<Video, "id">) => void;
   updateVideo: (id: string, patch: Partial<Video>) => void;
   removeVideo: (id: string) => void;
+
+  // Journal
+  addJournalEntry: (j: Omit<JournalEntry, "id">) => void;
+  updateJournalEntry: (id: string, patch: Partial<JournalEntry>) => void;
+  removeJournalEntry: (id: string) => void;
+
+  // Notifications
+  addNotification: (n: Omit<Notification, "id" | "date" | "read">) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  removeNotification: (id: string) => void;
+
+  // Achievements
+  recomputeAchievements: (streak: number) => void;
 
   // Bulk
   hydrate: (data: Partial<ContentState>) => void;
@@ -162,7 +196,7 @@ function reorder<T extends { id: string }>(arr: T[], fromId: string, toId: strin
 
 export const useContentStore = create<ContentState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       settings: emptySettings,
       gallery: emptyGallery,
       timeline: [],
@@ -177,11 +211,23 @@ export const useContentStore = create<ContentState>()(
       places: [],
       notes: [],
       videos: [],
+      journal: [],
+      notifications: [],
+      achievements: defaultAchievements,
       loaded: false,
 
       setSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
-      addPhoto: (photo) => set((s) => ({ gallery: { ...s.gallery, photos: [...s.gallery.photos, { ...photo, id: makeId("p") }] } })),
+      addPhoto: (photo) =>
+        set((s) => {
+          const photos = [...s.gallery.photos, { ...photo, id: makeId("p") }];
+          return {
+            gallery: { ...s.gallery, photos },
+            notifications: s.settings.notificationsEnabled
+              ? [{ id: makeId("n"), type: "photo" as const, title: "New photo added", body: photo.caption || "A new memory captured", date: new Date().toISOString(), read: false }, ...s.notifications]
+              : s.notifications,
+          };
+        }),
       addPhotos: (photos) =>
         set((s) => ({
           gallery: {
@@ -203,18 +249,39 @@ export const useContentStore = create<ContentState>()(
       reorderPhotos: (fromId, toId) =>
         set((s) => ({ gallery: { ...s.gallery, photos: reorder(s.gallery.photos, fromId, toId) } })),
 
-      addTimelineEvent: (e) => set((s) => ({ timeline: [...s.timeline, { ...e, id: makeId("tl") }] })),
+      addTimelineEvent: (e) =>
+        set((s) => ({
+          timeline: [...s.timeline, { ...e, id: makeId("tl") }],
+          notifications: s.settings.notificationsEnabled
+            ? [{ id: makeId("n"), type: "timeline" as const, title: "New memory added", body: e.title, date: new Date().toISOString(), read: false }, ...s.notifications]
+            : s.notifications,
+        })),
       updateTimelineEvent: (id, patch) =>
         set((s) => ({ timeline: s.timeline.map((e) => (e.id === id ? { ...e, ...patch } : e)) })),
-      removeTimelineEvent: (id) => set((s) => ({ timeline: s.timeline.filter((e) => e.id !== id) })),
-      reorderTimeline: (fromId, toId) => set((s) => ({ timeline: reorder(s.timeline, fromId, toId) })),
+      removeTimelineEvent: (id) =>
+        set((s) => ({ timeline: s.timeline.filter((e) => e.id !== id) })),
+      reorderTimeline: (fromId, toId) =>
+        set((s) => ({ timeline: reorder(s.timeline, fromId, toId) })),
 
-      addLetter: (l) => set((s) => ({ letters: [...s.letters, { ...l, id: makeId("lt") }] })),
+      addLetter: (l) =>
+        set((s) => ({
+          letters: [...s.letters, { ...l, id: makeId("lt") }],
+          notifications: s.settings.notificationsEnabled
+            ? [{ id: makeId("n"), type: "letter" as const, title: "New letter received", body: l.preview || l.recipient, date: new Date().toISOString(), read: false }, ...s.notifications]
+            : s.notifications,
+        })),
       updateLetter: (id, patch) =>
         set((s) => ({ letters: s.letters.map((l) => (l.id === id ? { ...l, ...patch } : l)) })),
-      removeLetter: (id) => set((s) => ({ letters: s.letters.filter((l) => l.id !== id) })),
+      removeLetter: (id) =>
+        set((s) => ({ letters: s.letters.filter((l) => l.id !== id) })),
 
-      addSong: (song) => set((s) => ({ playlist: { ...s.playlist, songs: [...s.playlist.songs, { ...song, id: makeId("s") }] } })),
+      addSong: (song) =>
+        set((s) => ({
+          playlist: { ...s.playlist, songs: [...s.playlist.songs, { ...song, id: makeId("s") }] },
+          notifications: s.settings.notificationsEnabled
+            ? [{ id: makeId("n"), type: "song" as const, title: "New song added", body: song.title, date: new Date().toISOString(), read: false }, ...s.notifications]
+            : s.notifications,
+        })),
       updateSong: (id, patch) =>
         set((s) => ({
           playlist: {
@@ -232,45 +299,159 @@ export const useContentStore = create<ContentState>()(
         })),
       setOurSong: (id) => set((s) => ({ playlist: { ...s.playlist, ourSongId: id } })),
 
-      addQuote: (q) => set((s) => ({ quotes: [...s.quotes, { ...q, id: makeId("q") }] })),
+      addQuote: (q) =>
+        set((s) => ({
+          quotes: [...s.quotes, { ...q, id: makeId("q") }],
+          notifications: s.settings.notificationsEnabled
+            ? [{ id: makeId("n"), type: "quote" as const, title: "New quote added", body: q.text.slice(0, 60), date: new Date().toISOString(), read: false }, ...s.notifications]
+            : s.notifications,
+        })),
       updateQuote: (id, patch) =>
         set((s) => ({ quotes: s.quotes.map((q) => (q.id === id ? { ...q, ...patch } : q)) })),
-      removeQuote: (id) => set((s) => ({ quotes: s.quotes.filter((q) => q.id !== id) })),
+      removeQuote: (id) =>
+        set((s) => ({ quotes: s.quotes.filter((q) => q.id !== id) })),
 
-      addBucketItem: (b) => set((s) => ({ bucketList: [...s.bucketList, { ...b, id: makeId("b") }] })),
+      addBucketItem: (b) =>
+        set((s) => ({ bucketList: [...s.bucketList, { ...b, id: makeId("b") }] })),
       updateBucketItem: (id, patch) =>
         set((s) => ({ bucketList: s.bucketList.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
-      removeBucketItem: (id) => set((s) => ({ bucketList: s.bucketList.filter((b) => b.id !== id) })),
+      removeBucketItem: (id) =>
+        set((s) => ({ bucketList: s.bucketList.filter((b) => b.id !== id) })),
 
-      addDream: (d) => set((s) => ({ futureDreams: [...s.futureDreams, { ...d, id: makeId("d") }] })),
+      addDream: (d) =>
+        set((s) => ({ futureDreams: [...s.futureDreams, { ...d, id: makeId("d") }] })),
       updateDream: (id, patch) =>
         set((s) => ({ futureDreams: s.futureDreams.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
-      removeDream: (id) => set((s) => ({ futureDreams: s.futureDreams.filter((d) => d.id !== id) })),
+      removeDream: (id) =>
+        set((s) => ({ futureDreams: s.futureDreams.filter((d) => d.id !== id) })),
 
-      addReason: (r) => set((s) => ({ reasons: [...s.reasons, { ...r, id: makeId("r") }] })),
+      addReason: (r) =>
+        set((s) => ({ reasons: [...s.reasons, { ...r, id: makeId("r") }] })),
       updateReason: (id, patch) =>
         set((s) => ({ reasons: s.reasons.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
-      removeReason: (id) => set((s) => ({ reasons: s.reasons.filter((r) => r.id !== id) })),
+      removeReason: (id) =>
+        set((s) => ({ reasons: s.reasons.filter((r) => r.id !== id) })),
 
-      addSpecialDate: (d) => set((s) => ({ specialDates: [...s.specialDates, { ...d, id: makeId("sd") }] })),
+      addSpecialDate: (d) =>
+        set((s) => ({ specialDates: [...s.specialDates, { ...d, id: makeId("sd") }] })),
       updateSpecialDate: (id, patch) =>
         set((s) => ({ specialDates: s.specialDates.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
-      removeSpecialDate: (id) => set((s) => ({ specialDates: s.specialDates.filter((d) => d.id !== id) })),
+      removeSpecialDate: (id) =>
+        set((s) => ({ specialDates: s.specialDates.filter((d) => d.id !== id) })),
 
-      addPlace: (p) => set((s) => ({ places: [...s.places, { ...p, id: makeId("pl") }] })),
+      addPlace: (p) =>
+        set((s) => ({
+          places: [...s.places, { ...p, id: makeId("pl") }],
+          notifications: s.settings.notificationsEnabled
+            ? [{ id: makeId("n"), type: "timeline" as const, title: "New place added", body: p.name, date: new Date().toISOString(), read: false }, ...s.notifications]
+            : s.notifications,
+        })),
       updatePlace: (id, patch) =>
         set((s) => ({ places: s.places.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
-      removePlace: (id) => set((s) => ({ places: s.places.filter((p) => p.id !== id) })),
+      removePlace: (id) =>
+        set((s) => ({ places: s.places.filter((p) => p.id !== id) })),
 
-      addNote: (n) => set((s) => ({ notes: [...s.notes, { ...n, id: makeId("n") }] })),
+      addNote: (n) =>
+        set((s) => ({ notes: [...s.notes, { ...n, id: makeId("n") }] })),
       updateNote: (id, patch) =>
         set((s) => ({ notes: s.notes.map((n) => (n.id === id ? { ...n, ...patch } : n)) })),
-      removeNote: (id) => set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
+      removeNote: (id) =>
+        set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
 
-      addVideo: (v) => set((s) => ({ videos: [...s.videos, { ...v, id: makeId("v") }] })),
+      addVideo: (v) =>
+        set((s) => ({
+          videos: [...s.videos, { ...v, id: makeId("v") }],
+          notifications: s.settings.notificationsEnabled
+            ? [{ id: makeId("n"), type: "video" as const, title: "New video added", body: v.title, date: new Date().toISOString(), read: false }, ...s.notifications]
+            : s.notifications,
+        })),
       updateVideo: (id, patch) =>
         set((s) => ({ videos: s.videos.map((v) => (v.id === id ? { ...v, ...patch } : v)) })),
-      removeVideo: (id) => set((s) => ({ videos: s.videos.filter((v) => v.id !== id) })),
+      removeVideo: (id) =>
+        set((s) => ({ videos: s.videos.filter((v) => v.id !== id) })),
+
+      addJournalEntry: (j) =>
+        set((s) => ({
+          journal: [...s.journal, { ...j, id: makeId("j") }],
+          notifications: s.settings.notificationsEnabled
+            ? [{ id: makeId("n"), type: "journal" as const, title: "New journal entry", body: j.title || "Untitled entry", date: new Date().toISOString(), read: false }, ...s.notifications]
+            : s.notifications,
+        })),
+      updateJournalEntry: (id, patch) =>
+        set((s) => ({ journal: s.journal.map((j) => (j.id === id ? { ...j, ...patch } : j)) })),
+      removeJournalEntry: (id) =>
+        set((s) => ({ journal: s.journal.filter((j) => j.id !== id) })),
+
+      addNotification: (n) =>
+        set((s) => ({
+          notifications: [
+            { ...n, id: makeId("n"), date: new Date().toISOString(), read: false },
+            ...s.notifications,
+          ],
+        })),
+      markNotificationRead: (id) =>
+        set((s) => ({
+          notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+        })),
+      markAllNotificationsRead: () =>
+        set((s) => ({
+          notifications: s.notifications.map((n) => ({ ...n, read: true })),
+        })),
+      removeNotification: (id) =>
+        set((s) => ({ notifications: s.notifications.filter((n) => n.id !== id) })),
+
+      recomputeAchievements: (streak) =>
+        set((s) => {
+          const state = get();
+          const photoCount = state.gallery.photos.length;
+          const letterCount = state.letters.length;
+          const songCount = state.playlist.songs.length;
+          const timelineCount = state.timeline.length;
+          const quoteCount = state.quotes.length;
+          const reasonCount = state.reasons.length;
+          const videoCount = state.videos.length;
+          const placeCount = state.places.length;
+          const journalCount = state.journal.length;
+          const bucketComplete =
+            state.bucketList.length > 0 && state.bucketList.every((b) => b.completed);
+
+          const updates: Record<string, { progress: number; unlocked: boolean }> = {
+            "ach-1": { progress: Math.min(photoCount, 1), unlocked: photoCount >= 1 },
+            "ach-2": { progress: photoCount, unlocked: photoCount >= 100 },
+            "ach-3": { progress: Math.min(letterCount, 1), unlocked: letterCount >= 1 },
+            "ach-4": { progress: Math.min(songCount, 1), unlocked: songCount >= 1 },
+            "ach-5": { progress: songCount, unlocked: songCount >= 50 },
+            "ach-6": { progress: Math.min(timelineCount, 1), unlocked: timelineCount >= 1 },
+            "ach-7": { progress: timelineCount, unlocked: timelineCount >= 10 },
+            "ach-8": { progress: Math.min(quoteCount, 1), unlocked: quoteCount >= 1 },
+            "ach-9": { progress: reasonCount, unlocked: reasonCount >= 100 },
+            "ach-10": { progress: Math.min(videoCount, 1), unlocked: videoCount >= 1 },
+            "ach-11": { progress: Math.min(placeCount, 1), unlocked: placeCount >= 1 },
+            "ach-12": { progress: placeCount, unlocked: placeCount >= 10 },
+            "ach-13": { progress: bucketComplete ? 1 : 0, unlocked: bucketComplete },
+            "ach-14": { progress: journalCount, unlocked: journalCount >= 30 },
+            "ach-15": { progress: streak, unlocked: streak >= 7 },
+            "ach-16": { progress: streak, unlocked: streak >= 30 },
+            "ach-17": { progress: streak, unlocked: streak >= 365 },
+            "ach-18": { progress: Math.min(journalCount, 1), unlocked: journalCount >= 1 },
+          };
+
+          return {
+            achievements: s.achievements.map((a) => {
+              const u = updates[a.id];
+              if (!u) return a;
+              const wasUnlocked = a.unlockedAt !== null;
+              const newlyUnlocked = u.unlocked && !wasUnlocked;
+              return {
+                ...a,
+                progress: u.progress,
+                unlockedAt: u.unlocked
+                  ? a.unlockedAt ?? new Date().toISOString()
+                  : null,
+              };
+            }),
+          };
+        }),
 
       hydrate: (data) => set({ ...data, loaded: true }),
       resetAll: () =>
@@ -289,6 +470,9 @@ export const useContentStore = create<ContentState>()(
           places: [],
           notes: [],
           videos: [],
+          journal: [],
+          notifications: [],
+          achievements: defaultAchievements,
           loaded: true,
         }),
     }),
@@ -310,6 +494,9 @@ export const useContentStore = create<ContentState>()(
         places: s.places,
         notes: s.notes,
         videos: s.videos,
+        journal: s.journal,
+        notifications: s.notifications,
+        achievements: s.achievements,
         loaded: true,
       }),
     }

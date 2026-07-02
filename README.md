@@ -1,106 +1,116 @@
 # Our Forever ❤️
 
-A premium, fully-frontend romantic couple website — built with Next.js 16, TypeScript, Tailwind CSS 4, Framer Motion, and GSAP. Zero backend, zero authentication, zero cloud. Everything runs from local files, JSON data, and browser LocalStorage.
+A premium, fully-functional, private couple website. Real auth, real-time sync, cloud storage — all powered by Supabase. Falls back to LocalStorage-only mode when Supabase isn't configured, so it always works.
 
 ## ✨ Features
 
+### Authentication
+- Real Supabase Auth (JWT, bcrypt, secure sessions)
+- Register / Login / Logout
+- Forgot Password (email-based reset via Supabase)
+- Change Password
+- Profile Picture + Edit Profile
+- Two-user lock — only your two emails can register
+- Protected routes — entire app behind auth gate
+- Falls back to LocalStorage auth when Supabase isn't configured
+
+### Sections
 - **Hero** — fullscreen slideshow, live date/time, real-time relationship counter, typewriter taglines, background music
-- **Our Story** — chapter cards derived from your timeline
-- **Love Gallery** — masonry layout with fullscreen lightbox, zoom, swipe, slideshow
-- **Memory Wall** — Pinterest-style board with polaroids, sticky notes, doodles
-- **Timeline** — animated milestone cards
-- **Bucket List** — interactive checklist with completion confetti
-- **Reasons I Love You** — flippable cards (short + long text)
-- **Love Letters** — envelopes with wax-seal animation that open into letters
-- **Playlist** — custom audio player with rotating album art, seek, volume, "Our Song"
-- **Couple Streak** — LocalStorage-backed daily check-ins with flame animations
-- **Couple Calendar** — GitHub-style contribution grid with hearts
-- **Daily Love Quote** — random rotation
-- **Future Dreams** — gradient dream cards
+- **Gallery** — masonry layout, drag & drop upload, fullscreen lightbox with zoom/swipe/slideshow, albums, favorites, search
+- **Video Gallery** — upload MP4/MOV/WEBM, auto-generated thumbnails, fullscreen player, favorites
+- **Timeline** — animated milestone cards with emoji, date, photo, location
+- **Journal** — daily entries with mood selector (8 moods), search, calendar view
+- **Love Letters** — envelopes with wax-seal animation, rich text, favorites
+- **Playlist** — upload MP3s, custom audio player, mark "Our Song", seek, volume, rotating album art
+- **Quotes** — unlimited quotes, favorites, daily rotation
+- **Bucket List** — interactive checklist with completion confetti, progress
+- **Special Dates** — birthdays, anniversaries, trips with live countdowns
+- **Places** — visual world map with pinned locations, stories, photos
+- **Achievements** — 18 unlockable badges that auto-compute from your content
 - **Mini Games** — Memory Match, Rock Paper Scissors, Spin the Wheel, Love Quiz, Would You Rather
-- **Easter Eggs** — Konami code, click-heart-10-times secret letter, confetti, fireworks
-- **Dark / Light mode** with smooth transitions
-- **Apple Liquid Glass UI** — glassmorphism, aurora gradients, floating hearts, particle starfield
-- **Fully responsive** — mobile-first
+- **Profile** — per-user avatar, bio, favorite song/quote, stats, change password
+- **Settings** — accent color picker, animations toggle, music toggle, notifications toggle, floating hearts toggle, particles toggle
 
-## 🎨 Content Manager
+### System Features
+- **Global Search** — ⌘K / Ctrl+K to search across all content (photos, videos, songs, letters, quotes, timeline, places, journal)
+- **Notifications** — bell icon with unread count, auto-generated when content is added
+- **Content Manager** — 13-tab modal to edit everything from the UI (no code)
+- **Couple Streak** — daily check-ins with flame animations
+- **Couple Calendar** — GitHub-style contribution grid with hearts
+- **Easter Eggs** — Konami code (↑↑↓↓←→←→BA), click-heart-10-times for secret letter, confetti, fireworks
 
-Click the **gear icon** in the navigation (or "Edit Content" on the hero) to open the Content Manager. 13 tabs let you edit everything from the UI — no code changes needed:
+### Design
+- Apple Liquid Glass UI — glassmorphism, aurora gradients, blur effects
+- Framer Motion + GSAP animations throughout
+- Floating hearts, particle starfield, parallax
+- Dark / Light mode with smooth transitions
+- Custom fonts: Playfair Display + Dancing Script + Geist
+- Fully responsive — mobile-first
+- Accessible — ARIA labels, keyboard nav, semantic HTML
 
-- **Photos** — Apple-Photos-style uploader: drag & drop, multi-select, reorder, captions, fullscreen preview with zoom
-- **Videos** — upload MP4/WebM, auto-generated thumbnails
-- **Songs** — upload MP3s, mark one as "Our Song"
-- **Letters**, **Quotes**, **Timeline**, **Notes**, **Bucket List**, **Special Dates**, **Places**, **Future Dreams**, **Reasons** — full CRUD
-- **Settings** — title, partner names, anniversary date, accent color, footer message
+## 🚀 Quick Start
 
-Edits are saved to LocalStorage automatically and survive refreshes.
-
-## 📁 Editing Content Without the UI
-
-All editable content lives in `/public/data/*.json`. Edit any file → refresh the page → content updates. No rebuild required.
-
-```
-public/data/
-├── settings.json        # title, names, anniversary, accent color, hero photos
-├── gallery.json         # photos + albums + categories
-├── timeline.json        # milestone events
-├── letters.json         # love letters
-├── playlist.json        # songs + ourSongId
-├── quotes.json          # quotes with favorite flag
-├── bucket-list.json     # goals
-├── future-dreams.json   # dream cards
-├── memories.json        # memory wall items
-├── reasons.json         # flip-card reasons
-├── special-dates.json   # birthdays, anniversaries
-├── places.json          # visited places
-├── notes.json           # love notes / journal
-└── videos.json          # video gallery
-```
-
-## 🖼️ Media Folders
-
-```
-public/
-├── gallery/    # couple photos (used in hero, gallery, memory wall)
-├── images/     # misc images
-├── videos/     # video files
-└── music/      # MP3 files
-```
-
-## 🚀 Run Locally
+### Local Mode (works immediately)
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000 — register with any email, app is fully functional with browser-only persistence.
 
-## ☁️ Deploy to Vercel
+### Cloud Mode (real auth + sync)
 
-1. Push this repo to GitHub
-2. Go to [vercel.com/new](https://vercel.com/new)
-3. Import the repo
-4. Click Deploy — no env vars needed
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run `supabase/schema.sql` in your Supabase SQL editor
+3. Copy `.env.local.example` to `.env.local` and fill in your Supabase keys + allowed emails
+4. Restart `npm run dev` — the app auto-upgrades to Cloud Mode
 
-## 🔌 Adding a Backend Later (Optional)
-
-The code is modular. To plug in Firebase / Supabase / Cloudinary:
-
-1. In `src/lib/content-store.ts`, replace the `persist` storage engine with API calls.
-2. In `src/components/content/photo-manager.tsx`, replace `URL.createObjectURL(file)` with an upload API call.
-
-The React UI does not need to change.
+See **[SETUP.md](./SETUP.md)** for the complete step-by-step guide.
 
 ## 🛠️ Tech Stack
 
-- Next.js 16 (App Router)
-- TypeScript 5
-- Tailwind CSS 4 + shadcn/ui
-- Framer Motion
-- Zustand (state management with LocalStorage persistence)
-- canvas-confetti
-- Lucide icons
+- **Framework:** Next.js 16 (App Router) + TypeScript 5
+- **Styling:** Tailwind CSS 4 + shadcn/ui
+- **Animations:** Framer Motion + GSAP
+- **State:** Zustand (with LocalStorage persistence)
+- **Backend:** Supabase (Auth + Database + Storage + Realtime)
+- **Confetti:** canvas-confetti
+
+## 📁 Architecture
+
+```
+src/
+├── app/                    # Next.js routes (single-page)
+├── components/
+│   ├── auth/               # Auth screen
+│   ├── content/            # Content Manager + Photo Manager
+│   ├── sections/           # All page sections (Hero, Gallery, etc.)
+│   ├── shared/             # Loading, particles, notifications, search
+│   └── ui/                 # shadcn/ui component library
+├── hooks/                  # Custom hooks (auth, streak, konami, etc.)
+└── lib/
+    ├── auth-context.tsx    # Auth provider (local + cloud)
+    ├── content-store.ts    # Zustand store with all CRUD actions
+    ├── supabase-client.ts  # Supabase client (graceful fallback)
+    └── types.ts            # Shared TypeScript types
+supabase/
+└── schema.sql              # Database schema (run in Supabase SQL editor)
+```
+
+## 🎨 Editing Content
+
+Two ways:
+1. **In-app Content Manager** — click the gear icon in the nav. 13 tabs for photos, videos, songs, letters, quotes, timeline, notes, bucket list, special dates, places, future dreams, reasons, settings.
+2. **JSON files** — edit `/public/data/*.json` directly, refresh, content updates.
+
+## ☁️ Deploy to Vercel
+
+1. Push to GitHub
+2. Go to [vercel.com/new](https://vercel.com/new)
+3. Import the repo
+4. Add env vars (same 5 as `.env.local`)
+5. Deploy — done in ~60 seconds
 
 ## 📝 License
 

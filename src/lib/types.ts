@@ -6,6 +6,7 @@ export type Photo = {
   caption: string;
   category: string;
   album: string;
+  favorite?: boolean;
 };
 
 export type GalleryData = {
@@ -21,6 +22,8 @@ export type TimelineEvent = {
   description: string;
   image: string;
   emoji: string;
+  location?: string;
+  favorite?: boolean;
 };
 
 export type LoveLetter = {
@@ -30,6 +33,7 @@ export type LoveLetter = {
   signature: string;
   preview: string;
   body: string[];
+  favorite?: boolean;
 };
 
 export type Song = {
@@ -40,6 +44,7 @@ export type Song = {
   duration: string;
   src: string;
   cover: string;
+  favorite?: boolean;
 };
 
 export type PlaylistData = {
@@ -52,6 +57,7 @@ export type Quote = {
   text: string;
   author: string;
   favorite: boolean;
+  category?: string;
 };
 
 export type BucketItem = {
@@ -60,6 +66,7 @@ export type BucketItem = {
   description: string;
   emoji: string;
   category: string;
+  completed?: boolean;
 };
 
 export type FutureDream = {
@@ -97,6 +104,8 @@ export type Place = {
   story: string;
   photos: string[];
   visitedDate: string;
+  lat?: number;
+  lng?: number;
 };
 
 export type Note = {
@@ -112,6 +121,36 @@ export type Video = {
   title: string;
   description: string;
   thumbnail: string;
+  favorite?: boolean;
+};
+
+export type JournalEntry = {
+  id: string;
+  date: string;
+  mood: "happy" | "love" | "calm" | "excited" | "tired" | "sad" | "grateful" | "neutral";
+  title: string;
+  body: string;
+  photos: string[];
+  authorId?: string;
+};
+
+export type Notification = {
+  id: string;
+  type: "photo" | "video" | "song" | "letter" | "quote" | "journal" | "timeline" | "anniversary" | "birthday" | "streak" | "achievement";
+  title: string;
+  body: string;
+  date: string;
+  read: boolean;
+};
+
+export type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  unlockedAt: string | null;
+  progress?: number;
+  target?: number;
 };
 
 export type Settings = {
@@ -124,4 +163,10 @@ export type Settings = {
   finalMessage: string;
   accentColor: string;
   heroPhotos: { id: string; src: string; caption: string }[];
+  themeColor: string;
+  animationsEnabled: boolean;
+  musicEnabled: boolean;
+  notificationsEnabled: boolean;
+  floatingHeartsEnabled: boolean;
+  particlesEnabled: boolean;
 };
