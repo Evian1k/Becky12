@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Video, Plus, Trash2, X, Play, Upload, Heart, Search } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
+import { uploadToStorage } from "@/lib/supabase-data";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
@@ -19,29 +20,43 @@ export function VideoGallery({ onOpenManager }: { onOpenManager: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
-    (files: FileList) => {
+    async (files: FileList) => {
       const arr = Array.from(files).filter((f) => f.type.startsWith("video/"));
       if (arr.length === 0) return;
       setUploading(true);
-      arr.forEach((file) => {
-        const url = URL.createObjectURL(file);
+      for (const file of arr) {
+        const url = await uploadToStorage(file, "videos");
         const video = document.createElement("video");
         video.src = url;
-        video.addEventListener("loadeddata", () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth || 320;
-          canvas.height = video.videoHeight || 180;
-          const ctx = canvas.getContext("2d");
-          if (ctx) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          addVideo({
-            src: url,
-            title: file.name.replace(/\.[^.]+$/, ""),
-            description: "",
-            thumbnail: canvas.toDataURL("image/jpeg", 0.7),
+        video.crossOrigin = "anonymous";
+        await new Promise<void>((resolve) => {
+          video.addEventListener("loadeddata", () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth || 320;
+            canvas.height = video.videoHeight || 180;
+            const ctx = canvas.getContext("2d");
+            if (ctx) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            addVideo({
+              src: url,
+              title: file.name.replace(/\.[^.]+$/, ""),
+              description: "",
+              thumbnail: canvas.toDataURL("image/jpeg", 0.7),
+            });
+            resolve();
+          });
+          video.addEventListener("error", () => {
+            // Fallback: add without thumbnail
+            addVideo({
+              src: url,
+              title: file.name.replace(/\.[^.]+$/, ""),
+              description: "",
+              thumbnail: "",
+            });
+            resolve();
           });
         });
-      });
-      setTimeout(() => setUploading(false), 800);
+      }
+      setUploading(false);
     },
     [addVideo]
   );

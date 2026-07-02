@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ContentProvider } from "@/components/content-provider";
 import { AuthProvider } from "@/lib/auth-context";
+import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -23,7 +24,13 @@ const dancing = Dancing_Script({
 export const metadata: Metadata = {
   title: "Our Forever ❤️",
   description: "A private corner of the internet that belongs to us.",
-  icons: { icon: "/logo.svg" },
+  icons: { icon: "/logo.svg", apple: "/icon-192.png" },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Our Forever",
+  },
 };
 
 export const viewport: Viewport = {
@@ -43,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <ContentProvider>
               {children}
               <Toaster />
+              <ServiceWorkerRegister />
             </ContentProvider>
           </AuthProvider>
         </ThemeProvider>

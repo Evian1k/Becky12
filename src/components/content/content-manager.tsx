@@ -8,6 +8,7 @@ import {
   Settings as SettingsIcon, Star, Upload, GripVertical, ChevronUp, ChevronDown,
 } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
+import { uploadToStorage } from "@/lib/supabase-data";
 import { PhotoManager } from "./photo-manager";
 import { cn } from "@/lib/utils";
 
@@ -274,26 +275,38 @@ function VideosTab() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
-    (files: FileList) => {
-      Array.from(files).filter((f) => f.type.startsWith("video/")).forEach((file) => {
-        const url = URL.createObjectURL(file);
-        // Try to grab a thumbnail via the video element.
+    async (files: FileList) => {
+      for (const file of Array.from(files).filter((f) => f.type.startsWith("video/"))) {
+        const url = await uploadToStorage(file, "videos");
         const video = document.createElement("video");
         video.src = url;
-        video.addEventListener("loadeddata", () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth || 320;
-          canvas.height = video.videoHeight || 180;
-          const ctx = canvas.getContext("2d");
-          if (ctx) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          addVideo({
-            src: url,
-            title: file.name.replace(/\.[^.]+$/, ""),
-            description: "",
-            thumbnail: canvas.toDataURL("image/jpeg", 0.7),
+        video.crossOrigin = "anonymous";
+        await new Promise<void>((resolve) => {
+          video.addEventListener("loadeddata", () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth || 320;
+            canvas.height = video.videoHeight || 180;
+            const ctx = canvas.getContext("2d");
+            if (ctx) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            addVideo({
+              src: url,
+              title: file.name.replace(/\.[^.]+$/, ""),
+              description: "",
+              thumbnail: canvas.toDataURL("image/jpeg", 0.7),
+            });
+            resolve();
+          });
+          video.addEventListener("error", () => {
+            addVideo({
+              src: url,
+              title: file.name.replace(/\.[^.]+$/, ""),
+              description: "",
+              thumbnail: "",
+            });
+            resolve();
           });
         });
-      });
+      }
     },
     [addVideo]
   );
@@ -355,24 +368,39 @@ function SongsTab() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
-    (files: FileList) => {
-      Array.from(files).filter((f) => f.type.startsWith("audio/")).forEach((file) => {
-        const url = URL.createObjectURL(file);
+    async (files: FileList) => {
+      for (const file of Array.from(files).filter((f) => f.type.startsWith("audio/"))) {
+        const url = await uploadToStorage(file, "songs");
         const audio = document.createElement("audio");
         audio.src = url;
-        audio.addEventListener("loadedmetadata", () => {
-          const m = Math.floor(audio.duration / 60);
-          const s = Math.floor(audio.duration % 60);
-          addSong({
-            title: file.name.replace(/\.[^.]+$/, ""),
-            artist: "",
-            album: "",
-            duration: `${m}:${s.toString().padStart(2, "0")}`,
-            src: url,
-            cover: "",
+        audio.crossOrigin = "anonymous";
+        await new Promise<void>((resolve) => {
+          audio.addEventListener("loadedmetadata", () => {
+            const m = Math.floor(audio.duration / 60);
+            const s = Math.floor(audio.duration % 60);
+            addSong({
+              title: file.name.replace(/\.[^.]+$/, ""),
+              artist: "",
+              album: "",
+              duration: `${m}:${s.toString().padStart(2, "0")}`,
+              src: url,
+              cover: "",
+            });
+            resolve();
+          });
+          audio.addEventListener("error", () => {
+            addSong({
+              title: file.name.replace(/\.[^.]+$/, ""),
+              artist: "",
+              album: "",
+              duration: "",
+              src: url,
+              cover: "",
+            });
+            resolve();
           });
         });
-      });
+      }
     },
     [addSong]
   );

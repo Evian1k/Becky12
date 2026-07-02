@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { User as UserIcon, Camera, Save, LogOut, Lock, Heart, Mail, Calendar } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useContentStore } from "@/lib/content-store";
+import { uploadToStorage } from "@/lib/supabase-data";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { fireConfetti } from "@/lib/confetti-helpers";
 
@@ -25,10 +26,10 @@ export function Profile() {
 
   if (!user) return null;
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
+    const url = await uploadToStorage(file, "avatars");
     setAvatar(url);
   };
 

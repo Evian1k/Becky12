@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { Upload, X, GripVertical, ImagePlus, Trash2, ZoomIn, Heart } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
+import { uploadToStorage } from "@/lib/supabase-data";
 import { cn } from "@/lib/utils";
 
 /**
@@ -36,20 +37,21 @@ export function PhotoManager({ onClose }: { onClose: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(
-    (files: FileList | File[]) => {
+    async (files: FileList | File[]) => {
       const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
       if (arr.length === 0) return;
       setUploading(true);
-      const newPhotos = arr.map((file) => ({
-        src: URL.createObjectURL(file),
-        caption: "",
-        category: "Selfies",
-        album: "Default",
-      }));
-      setTimeout(() => {
-        addPhotos(newPhotos);
-        setUploading(false);
-      }, 600);
+      // Upload each file to Supabase Storage (or fall back to blob URL)
+      const newPhotos = await Promise.all(
+        arr.map(async (file) => ({
+          src: await uploadToStorage(file, "photos"),
+          caption: "",
+          category: "Selfies",
+          album: "Default",
+        }))
+      );
+      addPhotos(newPhotos);
+      setUploading(false);
     },
     [addPhotos]
   );

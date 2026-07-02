@@ -11,19 +11,23 @@ import { SectionDivider } from "@/components/shared/parallax";
 import { CursorGlow } from "@/components/shared/cursor-glow";
 import { Navigation } from "@/components/sections/navigation";
 import { Hero } from "@/components/sections/hero";
+import { OurStory } from "@/components/sections/our-story";
 import { Gallery } from "@/components/sections/gallery";
 import { VideoGallery } from "@/components/sections/video-gallery";
+import { MemoryWall } from "@/components/sections/memory-wall";
 import { Timeline } from "@/components/sections/timeline";
 import { Journal } from "@/components/sections/journal";
 import { Letters } from "@/components/sections/letters";
 import { Playlist } from "@/components/sections/playlist";
 import { DailyQuote } from "@/components/sections/daily-quote";
+import { Reasons } from "@/components/sections/reasons";
 import { BucketListSection } from "@/components/sections/bucket-list";
 import { Streak } from "@/components/sections/streak";
 import { CoupleCalendar } from "@/components/sections/couple-calendar";
 import { SpecialDates } from "@/components/sections/special-dates";
 import { Places } from "@/components/sections/places";
 import { Achievements } from "@/components/sections/achievements";
+import { FutureDreams } from "@/components/sections/future-dreams";
 import { Games } from "@/components/sections/games";
 import { Profile } from "@/components/sections/profile";
 import { SettingsSection } from "@/components/sections/settings-section";
@@ -62,10 +66,16 @@ export default function Home() {
 
       <Hero onPlayMusic={toggle} musicPlaying={playing} onOpenManager={openManager} />
 
-      <Reveal><Gallery onOpenManager={openManager} /></Reveal>
+      <Reveal><OurStory onOpenManager={openManager} /></Reveal>
       <SectionDivider icon="heart" />
 
+      <Reveal><Gallery onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="sparkle" />
+
       <Reveal><VideoGallery onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="heart" />
+
+      <Reveal><MemoryWall onOpenManager={openManager} /></Reveal>
       <SectionDivider icon="sparkle" />
 
       <Reveal><Timeline onOpenManager={openManager} /></Reveal>
@@ -82,6 +92,9 @@ export default function Home() {
 
       <Reveal><DailyQuote onOpenManager={openManager} /></Reveal>
       <SectionDivider icon="heart" />
+
+      <Reveal><Reasons onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="sparkle" />
 
       <Reveal><BucketListSection onOpenManager={openManager} /></Reveal>
       <SectionDivider icon="sparkle" />
@@ -101,8 +114,11 @@ export default function Home() {
       <Reveal><Achievements /></Reveal>
       <SectionDivider icon="heart" />
 
-      <Reveal><Games /></Reveal>
+      <Reveal><FutureDreams onOpenManager={openManager} /></Reveal>
       <SectionDivider icon="sparkle" />
+
+      <Reveal><Games /></Reveal>
+      <SectionDivider icon="heart" />
 
       <Reveal><Profile /></Reveal>
       <SectionDivider icon="heart" />

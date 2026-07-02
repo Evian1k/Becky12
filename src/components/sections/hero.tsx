@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Heart, Play, Pause, Music2, ChevronDown, Settings } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
@@ -104,19 +104,18 @@ export function Hero({
   }, [slideshow.length]);
 
   const hasAnniversary = Boolean(settings.anniversaryDate);
-  const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
-  // Parallax: background drifts down, content fades + lifts as you scroll
-  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.18]);
-  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+  // Use viewport scroll (no target ref) — avoids the "non-static position" warning
+  // and works smoothly across all browsers.
+  const { scrollY } = useScroll();
+  // Parallax: background drifts down, content fades + lifts as you scroll.
+  // Map first 700px of scroll to the parallax range.
+  const bgY = useTransform(scrollY, [0, 700], [0, 200]);
+  const bgScale = useTransform(scrollY, [0, 700], [1, 1.18]);
+  const contentY = useTransform(scrollY, [0, 700], [0, 150]);
+  const contentOpacity = useTransform(scrollY, [0, 500], [1, 0]);
 
   return (
-    <section ref={sectionRef} id="home" className="relative h-screen min-h-[700px] w-full overflow-hidden">
+    <section id="home" className="relative h-screen min-h-[700px] w-full overflow-hidden">
       {/* Background slideshow with parallax */}
       <motion.div className="absolute inset-0" style={{ y: bgY, scale: bgScale }}>
         <AnimatePresence mode="sync">
