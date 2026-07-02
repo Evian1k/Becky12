@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Heart, Play, Pause, Music2, ChevronDown, Settings } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
 import { useRelationshipCounter } from "@/hooks/use-relationship-counter";
@@ -104,11 +104,21 @@ export function Hero({
   }, [slideshow.length]);
 
   const hasAnniversary = Boolean(settings.anniversaryDate);
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  // Parallax: background drifts down, content fades + lifts as you scroll
+  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.18]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
   return (
-    <section id="home" className="relative h-screen min-h-[700px] w-full overflow-hidden">
-      {/* Background slideshow */}
-      <div className="absolute inset-0">
+    <section ref={sectionRef} id="home" className="relative h-screen min-h-[700px] w-full overflow-hidden">
+      {/* Background slideshow with parallax */}
+      <motion.div className="absolute inset-0" style={{ y: bgY, scale: bgScale }}>
         <AnimatePresence mode="sync">
           <motion.div
             key={slide}
@@ -129,10 +139,13 @@ export function Hero({
         </AnimatePresence>
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/80" />
         <div className="absolute inset-0 bg-aurora-dark opacity-40 mix-blend-soft-light" />
-      </div>
+      </motion.div>
 
-      {/* Content */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
+      {/* Content with parallax fade */}
+      <motion.div
+        style={{ y: contentY, opacity: contentOpacity }}
+        className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center"
+      >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -259,7 +272,7 @@ export function Hero({
             </span>
           </button>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Slide indicators */}
       {slideshow.length > 1 && (

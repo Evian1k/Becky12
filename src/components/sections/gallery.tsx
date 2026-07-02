@@ -101,12 +101,13 @@ export function Gallery({ onOpenManager }: { onOpenManager: () => void }) {
             {photos.map((p, i) => (
               <motion.button
                 key={p.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 40, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.6, delay: (i % 4) * 0.08 }}
+                transition={{ duration: 0.7, delay: (i % 4) * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -6, scale: 1.02 }}
                 onClick={() => setLightbox(i)}
-                className="group relative block w-full overflow-hidden rounded-2xl"
+                className="group relative block w-full overflow-hidden rounded-2xl shadow-lg"
               >
                 { }
                 <img src={p.src} alt={p.caption} loading="lazy" className="w-full transition-transform duration-700 group-hover:scale-110" />

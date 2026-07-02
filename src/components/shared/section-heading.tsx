@@ -19,10 +19,13 @@ export function SectionHeading({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial="hidden"
+      whileInView="visible"
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.12 } },
+      }}
       className={cn(
         "max-w-3xl",
         align === "center" ? "mx-auto text-center" : "text-left",
@@ -30,24 +33,57 @@ export function SectionHeading({
       )}
     >
       {eyebrow && (
-        <div
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+          }}
           className={cn(
             "mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.25em] text-rose-500/80",
             align === "center" && "justify-center"
           )}
         >
-          <span className="h-px w-8 bg-rose-500/40" />
+          <motion.span
+            variants={{
+              hidden: { scaleX: 0 },
+              visible: { scaleX: 1, transition: { duration: 0.8, delay: 0.1 } },
+            }}
+            className="h-px w-8 origin-left bg-rose-500/40"
+          />
           {eyebrow}
-          <span className="h-px w-8 bg-rose-500/40" />
-        </div>
+          <motion.span
+            variants={{
+              hidden: { scaleX: 0 },
+              visible: { scaleX: 1, transition: { duration: 0.8, delay: 0.1 } },
+            }}
+            className="h-px w-8 origin-right bg-rose-500/40"
+          />
+        </motion.div>
       )}
-      <h2 className="font-serif-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
+      <motion.h2
+        variants={{
+          hidden: { opacity: 0, y: 30, filter: "blur(8px)" },
+          visible: {
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+            transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+          },
+        }}
+        className="font-serif-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl"
+      >
         {title}
-      </h2>
+      </motion.h2>
       {subtitle && (
-        <p className="mt-4 text-base text-muted-foreground sm:text-lg">
+        <motion.p
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.2 } },
+          }}
+          className="mt-4 text-base text-muted-foreground sm:text-lg"
+        >
           {subtitle}
-        </p>
+        </motion.p>
       )}
     </motion.div>
   );

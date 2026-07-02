@@ -6,6 +6,9 @@ import { LoadingScreen } from "@/components/shared/loading-screen";
 import { FloatingHearts } from "@/components/shared/floating-hearts";
 import { ParticleField } from "@/components/shared/particle-field";
 import { EasterEggs } from "@/components/shared/easter-eggs";
+import { ScrollProgress, Reveal } from "@/components/shared/animations";
+import { SectionDivider } from "@/components/shared/parallax";
+import { CursorGlow } from "@/components/shared/cursor-glow";
 import { Navigation } from "@/components/sections/navigation";
 import { Hero } from "@/components/sections/hero";
 import { Gallery } from "@/components/sections/gallery";
@@ -16,6 +19,8 @@ import { Letters } from "@/components/sections/letters";
 import { Playlist } from "@/components/sections/playlist";
 import { DailyQuote } from "@/components/sections/daily-quote";
 import { BucketListSection } from "@/components/sections/bucket-list";
+import { Streak } from "@/components/sections/streak";
+import { CoupleCalendar } from "@/components/sections/couple-calendar";
 import { SpecialDates } from "@/components/sections/special-dates";
 import { Places } from "@/components/sections/places";
 import { Achievements } from "@/components/sections/achievements";
@@ -40,18 +45,13 @@ export default function Home() {
 
   const openManager = () => setManagerOpen(true);
 
-  // Show loading screen on first mount
-  if (mounted && loading) {
-    return <LoadingScreen />;
-  }
-
-  // If not signed in, show auth screen
-  if (!user) {
-    return <AuthScreen />;
-  }
+  if (mounted && loading) return <LoadingScreen />;
+  if (!user) return <AuthScreen />;
 
   return (
     <main className="relative min-h-screen w-full overflow-x-hidden">
+      <ScrollProgress />
+      <CursorGlow />
       <ParticleField />
       <FloatingHearts count={16} />
 
@@ -62,21 +62,52 @@ export default function Home() {
 
       <Hero onPlayMusic={toggle} musicPlaying={playing} onOpenManager={openManager} />
 
-      <Gallery onOpenManager={openManager} />
-      <VideoGallery onOpenManager={openManager} />
-      <Timeline onOpenManager={openManager} />
-      <Journal onOpenManager={openManager} />
-      <Letters onOpenManager={openManager} />
-      <Playlist onOpenManager={openManager} />
-      <DailyQuote onOpenManager={openManager} />
-      <BucketListSection onOpenManager={openManager} />
-      <SpecialDates onOpenManager={openManager} />
-      <Places onOpenManager={openManager} />
-      <Achievements />
-      <Games />
+      <Reveal><Gallery onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="heart" />
 
-      <Profile />
-      <SettingsSection />
+      <Reveal><VideoGallery onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="sparkle" />
+
+      <Reveal><Timeline onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="heart" />
+
+      <Reveal><Journal onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="sparkle" />
+
+      <Reveal><Letters onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="heart" />
+
+      <Reveal><Playlist onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="sparkle" />
+
+      <Reveal><DailyQuote onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="heart" />
+
+      <Reveal><BucketListSection onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="sparkle" />
+
+      <Reveal><Streak /></Reveal>
+      <SectionDivider icon="heart" />
+
+      <Reveal><CoupleCalendar /></Reveal>
+      <SectionDivider icon="sparkle" />
+
+      <Reveal><SpecialDates onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="heart" />
+
+      <Reveal><Places onOpenManager={openManager} /></Reveal>
+      <SectionDivider icon="sparkle" />
+
+      <Reveal><Achievements /></Reveal>
+      <SectionDivider icon="heart" />
+
+      <Reveal><Games /></Reveal>
+      <SectionDivider icon="sparkle" />
+
+      <Reveal><Profile /></Reveal>
+      <SectionDivider icon="heart" />
+
+      <Reveal><SettingsSection /></Reveal>
 
       <Footer />
 
