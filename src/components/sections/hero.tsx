@@ -94,7 +94,7 @@ export function Hero({
 
   const slideshow = (settings.heroPhotos && settings.heroPhotos.length > 0)
     ? settings.heroPhotos
-    : [{ id: "default", src: "/gallery/couple-1.jpg", caption: "" }];
+    : []; // Empty — user adds their own photos via Content Manager
 
   useEffect(() => {
     if (slideshow.length <= 1) return;
@@ -119,23 +119,28 @@ export function Hero({
     <section id="home" className="relative h-screen min-h-[700px] w-full overflow-hidden">
       {/* Background slideshow with parallax */}
       <motion.div className="absolute inset-0" style={{ y: bgY, scale: bgScale }}>
-        <AnimatePresence mode="sync">
-          <motion.div
-            key={slide}
-            initial={{ opacity: 0, scale: 1.08 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.02 }}
-            transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0"
-          >
-            <SmartImage
-              src={slideshow[slide].src}
-              alt={slideshow[slide].caption || "Us"}
-              className="h-full w-full object-cover"
-              loading="eager"
-            />
-          </motion.div>
-        </AnimatePresence>
+        {slideshow.length > 0 ? (
+          <AnimatePresence mode="sync">
+            <motion.div
+              key={slide}
+              initial={{ opacity: 0, scale: 1.08 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0"
+            >
+              <SmartImage
+                src={slideshow[slide].src}
+                alt={slideshow[slide].caption || "Us"}
+                className="h-full w-full object-cover"
+                loading="eager"
+              />
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          // Beautiful gradient background when no photos uploaded yet
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-900 via-pink-900 to-purple-900" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/80" />
         <div className="absolute inset-0 bg-aurora-dark opacity-40 mix-blend-soft-light" />
       </motion.div>

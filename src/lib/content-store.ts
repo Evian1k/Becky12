@@ -26,10 +26,7 @@ import type {
 import { makeId } from "@/hooks/use-json-data";
 
 const emptyGallery: GalleryData = {
-  photos: [
-    { id: "p-1", src: "/gallery/couple-1.jpg", caption: "", category: "Selfies", album: "Default" },
-    { id: "p-2", src: "/gallery/couple-2.jpg", caption: "", category: "Selfies", album: "Default" },
-  ],
+  photos: [],
   albums: ["Default"],
   categories: ["Selfies", "Adventures", "Funny Moments", "Dates", "Random"],
 };
