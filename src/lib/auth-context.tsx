@@ -103,17 +103,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: "This email is not on the invited list. Only the two of us can join." };
     }
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } }, // passed to the handle_new_user trigger
+      });
       if (error) return { error: error.message };
-      if (data.user) {
-        await supabase.from("profiles").insert({
-          id: data.user.id,
-          email,
-          name,
-          avatar: "",
-          bio: "",
-        });
-      }
+      // The handle_new_user trigger in schema.sql auto-creates a profile row
+      // when the auth user is created. We don't need to insert it here — and
+      // trying to do so would fail anyway because RLS only allows the owner
+      // to insert, but the user isn't fully authenticated yet.
       return { error: null };
     }
     // Local mode
