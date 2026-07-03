@@ -284,11 +284,14 @@ export function subscribeToTable(table: string, handler: TableHandler): () => vo
 
 /**
  * Uploads a file to Supabase Storage. Returns the public URL.
- * Falls back to URL.createObjectURL if Supabase isn't configured.
+ * Falls back to IndexedDB (persistent across refreshes) if Supabase isn't configured.
  */
 export async function uploadToStorage(file: File | Blob, folder: string): Promise<string> {
   if (!isSupabaseConfigured || !supabase) {
-    return URL.createObjectURL(file);
+    // Local mode: store in IndexedDB so it survives refresh.
+    // Returns an `idb://` URL that resolveSrc() can resolve later.
+    const { storeBlob } = await import("@/lib/indexeddb-storage");
+    return storeBlob(file);
   }
   const ext = file.type.split("/")[1] || "bin";
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -297,8 +300,9 @@ export async function uploadToStorage(file: File | Blob, folder: string): Promis
     upsert: false,
   });
   if (error) {
-    console.warn("Storage upload failed, falling back to blob URL:", error.message);
-    return URL.createObjectURL(file);
+    console.warn("Storage upload failed, falling back to IndexedDB:", error.message);
+    const { storeBlob } = await import("@/lib/indexeddb-storage");
+    return storeBlob(file);
   }
   const { data } = supabase.storage.from("media").getPublicUrl(path);
   return data.publicUrl;

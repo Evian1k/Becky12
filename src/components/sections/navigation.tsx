@@ -6,6 +6,7 @@ import { Menu, X, Heart, Settings, LogOut, User as UserIcon } from "lucide-react
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { GlobalSearch } from "@/components/shared/global-search";
 import { NotificationsBell } from "@/components/shared/notifications-bell";
+import { SmartImage } from "@/components/shared/smart-media";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -74,7 +75,7 @@ export function Navigation({ onOpenManager, onSignOut }: { onOpenManager: () => 
             <span className="font-script text-lg">Our Forever</span>
           </button>
 
-          <div className={cn("hidden items-center gap-1 rounded-full px-2 py-1.5 xl:flex transition-all duration-500", scrolled ? "glass" : "glass-strong")}>
+          <div className={cn("hidden items-center gap-1 rounded-full px-2 py-1.5 2xl:flex transition-all duration-500", scrolled ? "glass" : "glass-strong")}>
             {links.slice(0, 12).map((l) => (
               <button
                 key={l.id}
@@ -96,22 +97,22 @@ export function Navigation({ onOpenManager, onSignOut }: { onOpenManager: () => 
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <GlobalSearch />
             <NotificationsBell />
             <button
               onClick={onOpenManager}
               aria-label="Open Content Manager"
-              className="glass hidden h-10 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-rose-500 hover:bg-rose-500/10 sm:flex"
+              className="glass hidden h-9 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-rose-500 hover:bg-rose-500/10 lg:flex"
             >
               <Settings size={12} />
-              Edit
+              <span className="hidden xl:inline">Edit</span>
             </button>
             {user && (
               <button
                 onClick={onSignOut}
                 aria-label="Sign out"
-                className="glass grid h-10 w-10 place-items-center rounded-full text-foreground/80 hover:text-red-500"
+                className="glass hidden h-9 w-9 place-items-center rounded-full text-foreground/80 hover:text-red-500 sm:grid"
                 title="Sign out"
               >
                 <LogOut size={14} />
@@ -121,7 +122,7 @@ export function Navigation({ onOpenManager, onSignOut }: { onOpenManager: () => 
             <button
               onClick={() => setOpen((o) => !o)}
               aria-label="Open menu"
-              className="glass grid h-10 w-10 place-items-center rounded-full xl:hidden"
+              className="glass grid h-9 w-9 place-items-center rounded-full 2xl:hidden"
             >
               {open ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -135,7 +136,7 @@ export function Navigation({ onOpenManager, onSignOut }: { onOpenManager: () => 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99] xl:hidden"
+            className="fixed inset-0 z-[99] 2xl:hidden"
           >
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
             <motion.div
@@ -143,14 +144,13 @@ export function Navigation({ onOpenManager, onSignOut }: { onOpenManager: () => 
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
               transition={{ ease: [0.22, 1, 0.36, 1] }}
-              className="glass-strong absolute inset-x-4 top-24 max-h-[80vh] overflow-y-auto rounded-3xl p-4 custom-scrollbar"
+              className="glass-strong absolute inset-x-2 top-20 max-h-[85vh] overflow-y-auto rounded-3xl p-3 custom-scrollbar sm:inset-x-4 sm:top-24 sm:p-4"
             >
               {user && (
                 <div className="mb-3 flex items-center gap-3 rounded-2xl bg-rose-500/10 p-3">
                   <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white">
                     {user.avatar ? (
-                       
-                      <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                      <SmartImage src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
                     ) : (
                       <UserIcon size={16} />
                     )}
@@ -184,6 +184,14 @@ export function Navigation({ onOpenManager, onSignOut }: { onOpenManager: () => 
               >
                 <Settings size={14} /> Content Manager
               </button>
+              {user && (
+                <button
+                  onClick={() => { onSignOut(); setOpen(false); }}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-500"
+                >
+                  <LogOut size={14} /> Sign Out
+                </button>
+              )}
             </motion.div>
           </motion.div>
         )}

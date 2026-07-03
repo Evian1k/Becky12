@@ -6,7 +6,7 @@ import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 
 export function OurStory({ onOpenManager }: { onOpenManager: () => void }) {
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
   const timeline = useContentStore((s) => s.timeline);
 
   // Derive story chapters from the first few timeline events.

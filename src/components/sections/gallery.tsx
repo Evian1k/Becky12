@@ -6,10 +6,12 @@ import { X, ChevronLeft, ChevronRight, ZoomIn, Play, Pause, Maximize2, ImagePlus
 import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SmartImage } from "@/components/shared/smart-media";
 import { cn } from "@/lib/utils";
 
 export function Gallery({ onOpenManager }: { onOpenManager: () => void }) {
   const gallery = useContentStore((s) => s.gallery);
+  const markPhotoViewed = useContentStore((s) => s.markPhotoViewed);
   const [category, setCategory] = useState<string>("All");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [autoPlay, setAutoPlay] = useState(false);
@@ -106,11 +108,10 @@ export function Gallery({ onOpenManager }: { onOpenManager: () => void }) {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.7, delay: (i % 4) * 0.1, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{ y: -6, scale: 1.02 }}
-                onClick={() => setLightbox(i)}
+                onClick={() => { setLightbox(i); markPhotoViewed(photos[i].id); }}
                 className="group relative block w-full overflow-hidden rounded-2xl shadow-lg"
               >
-                { }
-                <img src={p.src} alt={p.caption} loading="lazy" className="w-full transition-transform duration-700 group-hover:scale-110" />
+                <SmartImage src={p.src} alt={p.caption} loading="lazy" className="w-full transition-transform duration-700 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                 {p.caption && (
                   <div className="absolute bottom-0 left-0 right-0 p-3 text-left opacity-0 transition-all duration-500 group-hover:opacity-100">
@@ -170,8 +171,7 @@ export function Gallery({ onOpenManager }: { onOpenManager: () => void }) {
               className="max-h-[85vh] max-w-[90vw] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              { }
-              <img src={photos[lightbox].src} alt={photos[lightbox].caption} className="max-h-[85vh] max-w-[90vw] rounded-2xl object-contain" />
+              <SmartImage src={photos[lightbox].src} alt={photos[lightbox].caption} className="max-h-[85vh] max-w-[90vw] rounded-2xl object-contain" />
             </motion.div>
           </motion.div>
         )}

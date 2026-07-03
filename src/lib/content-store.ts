@@ -182,6 +182,10 @@ type ContentState = {
   // Bulk
   hydrate: (data: Partial<ContentState>) => void;
   resetAll: () => void;
+
+  // Auto-cleanup
+  cleanupOldPhotos: (maxAgeDays?: number) => { deleted: number; remaining: number };
+  markPhotoViewed: (id: string) => void;
 };
 
 function reorder<T extends { id: string }>(arr: T[], fromId: string, toId: string): T[] {
@@ -220,21 +224,25 @@ export const useContentStore = create<ContentState>()(
 
       addPhoto: (photo) =>
         set((s) => {
-          const photos = [...s.gallery.photos, { ...photo, id: makeId("p") }];
+          const now = new Date().toISOString();
+          const photos = [...s.gallery.photos, { ...photo, id: makeId("p"), uploadedAt: now, lastViewed: now }];
           return {
             gallery: { ...s.gallery, photos },
             notifications: s.settings.notificationsEnabled
-              ? [{ id: makeId("n"), type: "photo" as const, title: "New photo added", body: photo.caption || "A new memory captured", date: new Date().toISOString(), read: false }, ...s.notifications]
+              ? [{ id: makeId("n"), type: "photo" as const, title: "New photo added", body: photo.caption || "A new memory captured", date: now, read: false }, ...s.notifications]
               : s.notifications,
           };
         }),
       addPhotos: (photos) =>
-        set((s) => ({
-          gallery: {
-            ...s.gallery,
-            photos: [...s.gallery.photos, ...photos.map((p) => ({ ...p, id: makeId("p") }))],
-          },
-        })),
+        set((s) => {
+          const now = new Date().toISOString();
+          return {
+            gallery: {
+              ...s.gallery,
+              photos: [...s.gallery.photos, ...photos.map((p) => ({ ...p, id: makeId("p"), uploadedAt: now, lastViewed: now }))],
+            },
+          };
+        }),
       updatePhoto: (id, patch) =>
         set((s) => ({
           gallery: {
@@ -475,6 +483,47 @@ export const useContentStore = create<ContentState>()(
           achievements: defaultAchievements,
           loaded: true,
         }),
+
+      // Mark a photo as viewed (called when user opens it in lightbox)
+      markPhotoViewed: (id) =>
+        set((s) => ({
+          gallery: {
+            ...s.gallery,
+            photos: s.gallery.photos.map((p) =>
+              p.id === id ? { ...p, lastViewed: new Date().toISOString() } : p
+            ),
+          },
+        })),
+
+      // Delete photos not viewed in the last `maxAgeDays` days (default 30).
+      // Favorites are always kept. Returns counts for UI feedback.
+      cleanupOldPhotos: (maxAgeDays = 30) => {
+        const state = get();
+        const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+        const toDelete: string[] = [];
+        const toKeep: typeof state.gallery.photos = [];
+
+        for (const p of state.gallery.photos) {
+          // Always keep favorites
+          if (p.favorite) {
+            toKeep.push(p);
+            continue;
+          }
+          const lastViewed = p.lastViewed ? new Date(p.lastViewed).getTime() : (p.uploadedAt ? new Date(p.uploadedAt).getTime() : 0);
+          if (lastViewed < cutoff) {
+            toDelete.push(p.id);
+            // Also delete the blob from IndexedDB if it's an idb:// URL
+            if (p.src.startsWith("idb://")) {
+              import("@/lib/indexeddb-storage").then(({ deleteBlob }) => deleteBlob(p.src)).catch(() => {});
+            }
+          } else {
+            toKeep.push(p);
+          }
+        }
+
+        set({ gallery: { ...state.gallery, photos: toKeep } });
+        return { deleted: toDelete.length, remaining: toKeep.length };
+      },
     }),
     {
       name: "our-forever-content",

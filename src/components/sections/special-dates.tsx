@@ -32,7 +32,7 @@ const typeEmoji: Record<string, string> = {
 
 export function SpecialDates({ onOpenManager }: { onOpenManager: () => void }) {
   const specialDates = useContentStore((s) => s.specialDates);
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
 
   // Auto-include anniversary from settings if set
   const allDates = settings.anniversaryDate

@@ -52,7 +52,7 @@ const monthLabels = (days: { date: Date }[]) => {
 
 export function CoupleCalendar() {
   const mounted = useMounted();
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
   const anniversary = settings.anniversaryDate || "";
   const { state, hydrated } = useStreak(anniversary);
   const [hovered, setHovered] = useState<string | null>(null);

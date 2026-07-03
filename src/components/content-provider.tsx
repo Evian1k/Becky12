@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useContentStore } from "@/lib/content-store";
 import { isSupabaseConfigured } from "@/lib/supabase-client";
 import { loadAllFromSupabase, subscribeToTable } from "@/lib/supabase-data";
+import { estimateStorage } from "@/lib/indexeddb-storage";
 
 /**
  * On first mount:
@@ -85,6 +86,25 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, [loaded, hydrate]);
+
+  // Auto-cleanup: when storage is over 80% full, delete photos not viewed
+  // in the last 30 days (favorites are always kept). Runs once on load.
+  useEffect(() => {
+    if (!loaded) return;
+    let cancelled = false;
+    (async () => {
+      const est = await estimateStorage();
+      if (cancelled || !est || est.quota === 0) return;
+      const usagePct = (est.usage / est.quota) * 100;
+      if (usagePct > 80) {
+        const result = useContentStore.getState().cleanupOldPhotos(30);
+        if (result.deleted > 0) {
+          console.log(`Auto-cleanup: freed space by removing ${result.deleted} photo(s) not viewed in 30+ days.`);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [loaded]);
 
   // Realtime subscriptions (only in cloud mode, after initial load)
   useEffect(() => {

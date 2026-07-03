@@ -1,9 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Palette, Sparkles, Music, Bell, Heart, Save, RotateCcw } from "lucide-react";
+import { Palette, Sparkles, Music, Bell, Heart, Save, RotateCcw, Trash2, HardDrive } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
+import { estimateStorage } from "@/lib/indexeddb-storage";
 import { cn } from "@/lib/utils";
 
 const accentColors = [
@@ -45,7 +47,7 @@ function Toggle({ value, onChange, label, description, icon }: { value: boolean;
 }
 
 export function SettingsSection() {
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
   const setSettings = useContentStore((s) => s.setSettings);
   const resetAll = useContentStore((s) => s.resetAll);
 
@@ -139,11 +141,14 @@ export function SettingsSection() {
         </motion.div>
 
         {/* Reset */}
+        {/* Storage management */}
+        <StorageSection />
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
           className="glass rounded-3xl p-6"
         >
           <h4 className="flex items-center gap-2 font-serif-display text-lg font-bold text-red-500">
@@ -165,5 +170,95 @@ export function SettingsSection() {
         </motion.div>
       </div>
     </SectionWrapper>
+  );
+}
+
+function StorageSection() {
+  const gallery = useContentStore((s) => s.gallery);
+  const cleanupOldPhotos = useContentStore((s) => s.cleanupOldPhotos);
+  const [storage, setStorage] = useState<{ usage: number; quota: number } | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    estimateStorage().then(setStorage);
+  }, [gallery.photos.length]);
+
+  const formatBytes = (b: number) => {
+    if (b < 1024) return `${b} B`;
+    if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+    if (b < 1024 * 1024 * 1024) return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(b / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  };
+
+  const usagePct = storage && storage.quota > 0 ? (storage.usage / storage.quota) * 100 : 0;
+
+  const handleCleanup = () => {
+    const { deleted, remaining } = cleanupOldPhotos(30);
+    if (deleted === 0) {
+      setResult(`No old photos to clean up. All ${remaining} photos have been viewed recently or are favorited.`);
+    } else {
+      setResult(`✓ Deleted ${deleted} photo${deleted !== 1 ? "s" : ""} not viewed in 30+ days. ${remaining} photos kept (favorites + recently viewed).`);
+    }
+    setTimeout(() => setResult(null), 6000);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: 0.25 }}
+      className="glass-strong rounded-3xl p-6"
+    >
+      <h4 className="flex items-center gap-2 font-serif-display text-lg font-bold">
+        <HardDrive size={16} /> Storage
+      </h4>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Manage space by removing photos you haven't looked at in a while.
+      </p>
+
+      {/* Storage usage bar */}
+      {storage && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{formatBytes(storage.usage)} used</span>
+            <span>{formatBytes(storage.quota)} total</span>
+          </div>
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-rose-500/10">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all",
+                usagePct > 80 ? "bg-red-500" : usagePct > 60 ? "bg-amber-500" : "bg-gradient-to-r from-rose-500 to-pink-500"
+              )}
+              style={{ width: `${Math.min(usagePct, 100)}%` }}
+            />
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            {usagePct.toFixed(1)}% used • {gallery.photos.length} photo{gallery.photos.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+      )}
+
+      {/* Cleanup button */}
+      <button
+        onClick={handleCleanup}
+        className="mt-4 flex items-center gap-1.5 rounded-full bg-rose-500/10 px-4 py-2 text-xs font-medium text-rose-500 hover:bg-rose-500/20"
+      >
+        <Trash2 size={12} /> Clean up photos not viewed in 30 days
+      </button>
+      <p className="mt-1.5 text-[10px] text-muted-foreground">
+        Favorites are always kept. Auto-cleanup runs when storage is over 80% full.
+      </p>
+
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3 rounded-xl bg-green-500/15 px-4 py-2.5 text-xs text-green-600 dark:text-green-400"
+        >
+          {result}
+        </motion.div>
+      )}
+    </motion.div>
   );
 }

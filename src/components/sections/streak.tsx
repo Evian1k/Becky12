@@ -74,7 +74,7 @@ function ActionButton({
 
 export function Streak() {
   const mounted = useMounted();
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
   // Use a stable empty-string fallback when anniversary is not set so the
   // useEffect inside useStreak doesn't run on every render.
   const anniversary = settings.anniversaryDate || "";

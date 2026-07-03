@@ -7,6 +7,8 @@ export type Photo = {
   category: string;
   album: string;
   favorite?: boolean;
+  lastViewed?: string; // ISO date — used for auto-cleanup of old, unviewed photos
+  uploadedAt?: string; // ISO date
 };
 
 export type GalleryData = {

@@ -5,6 +5,7 @@ import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { Upload, X, GripVertical, ImagePlus, Trash2, ZoomIn, Heart } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
 import { uploadToStorage } from "@/lib/supabase-data";
+import { useResolvedSrc } from "@/hooks/use-resolved-src";
 import { cn } from "@/lib/utils";
 
 /**
@@ -156,12 +157,7 @@ export function PhotoManager({ onClose }: { onClose: () => void }) {
                 className="group relative aspect-square overflow-hidden rounded-2xl bg-rose-500/5"
                 whileDrag={{ scale: 1.05, zIndex: 30 }}
               >
-                { }
-                <img
-                  src={photo.src}
-                  alt={photo.caption || "Photo"}
-                  className="h-full w-full object-cover"
-                />
+                <PhotoThumb photo={photo} />
                 <div className="absolute left-1 top-1 grid h-7 w-7 cursor-grab place-items-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing">
                   <GripVertical size={14} />
                 </div>
@@ -225,12 +221,7 @@ export function PhotoManager({ onClose }: { onClose: () => void }) {
               onClick={(e) => e.stopPropagation()}
               className="max-h-[85vh] max-w-[90vw]"
             >
-              { }
-              <img
-                src={gallery.photos[previewIdx].src}
-                alt={gallery.photos[previewIdx].caption || "Photo"}
-                className="max-h-[85vh] max-w-[90vw] rounded-2xl object-contain"
-              />
+              <PreviewImage src={gallery.photos[previewIdx].src} alt={gallery.photos[previewIdx].caption || "Photo"} />
             </motion.div>
             <div className="absolute right-4 top-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
               <button
@@ -260,5 +251,33 @@ export function PhotoManager({ onClose }: { onClose: () => void }) {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// Helper components that resolve idb:// URLs
+
+function PhotoThumb({ photo }: { photo: { src: string; caption: string } }) {
+  const resolved = useResolvedSrc(photo.src);
+  if (!resolved) return <div className="h-full w-full bg-rose-500/10" />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={resolved}
+      alt={photo.caption || "Photo"}
+      className="h-full w-full object-cover"
+    />
+  );
+}
+
+function PreviewImage({ src, alt }: { src: string; alt: string }) {
+  const resolved = useResolvedSrc(src);
+  if (!resolved) return <div className="max-h-[85vh] max-w-[90vw]" />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={resolved}
+      alt={alt}
+      className="max-h-[85vh] max-w-[90vw] rounded-2xl object-contain"
+    />
   );
 }

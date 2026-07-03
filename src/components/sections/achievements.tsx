@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function Achievements() {
   const mounted = useMounted();
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
   const achievements = useContentStore((s) => s.achievements);
   const recompute = useContentStore((s) => s.recomputeAchievements);
   const anniversary = settings.anniversaryDate || "";

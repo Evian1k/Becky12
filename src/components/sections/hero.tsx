@@ -6,6 +6,7 @@ import { Heart, Play, Pause, Music2, ChevronDown, Settings } from "lucide-react"
 import { useContentStore } from "@/lib/content-store";
 import { useRelationshipCounter } from "@/hooks/use-relationship-counter";
 import { fireHearts } from "@/lib/confetti-helpers";
+import { SmartImage } from "@/components/shared/smart-media";
 
 const typewriterPhrases = [
   "Our story is still being written...",
@@ -63,7 +64,7 @@ function CounterUnit({ value, label }: { value: number; label: string }) {
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="font-serif-display text-3xl font-bold text-white tabular-nums sm:text-4xl md:text-5xl"
+        className="font-serif-display text-2xl font-bold text-white tabular-nums sm:text-4xl md:text-5xl"
       >
         {String(value).padStart(2, "0")}
       </motion.div>
@@ -83,7 +84,7 @@ export function Hero({
   musicPlaying: boolean;
   onOpenManager: () => void;
 }) {
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
   // Use a stable empty-string fallback when anniversary is not set; the
   // useRelationshipCounter hook handles empty strings gracefully and we
   // only show the counter when settings.anniversaryDate is truthy.
@@ -91,7 +92,7 @@ export function Hero({
   const { duration, now } = useRelationshipCounter(anniversary);
   const [slide, setSlide] = useState(0);
 
-  const slideshow = settings.heroPhotos.length
+  const slideshow = (settings.heroPhotos && settings.heroPhotos.length > 0)
     ? settings.heroPhotos
     : [{ id: "default", src: "/gallery/couple-1.jpg", caption: "" }];
 
@@ -127,8 +128,7 @@ export function Hero({
             transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
             className="absolute inset-0"
           >
-            { }
-            <img
+            <SmartImage
               src={slideshow[slide].src}
               alt={slideshow[slide].caption || "Us"}
               className="h-full w-full object-cover"
@@ -209,7 +209,7 @@ export function Hero({
               Together for
               <Heart size={12} fill="currentColor" strokeWidth={0} className="animate-heartbeat" />
             </div>
-            <div className="glass-strong flex items-center gap-4 rounded-3xl px-6 py-5 sm:gap-6 sm:px-10">
+            <div className="glass-strong flex flex-wrap items-center justify-center gap-2 rounded-3xl px-3 py-4 sm:gap-4 sm:px-6 md:gap-6 md:px-10">
               {duration && (
                 <>
                   <CounterUnit value={duration.years} label="Years" />

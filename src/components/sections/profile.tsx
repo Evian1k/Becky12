@@ -7,11 +7,12 @@ import { useAuth } from "@/lib/auth-context";
 import { useContentStore } from "@/lib/content-store";
 import { uploadToStorage } from "@/lib/supabase-data";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
+import { SmartImage } from "@/components/shared/smart-media";
 import { fireConfetti } from "@/lib/confetti-helpers";
 
 export function Profile() {
   const { user, updateProfile, signOut, updatePassword } = useAuth();
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
   const gallery = useContentStore((s) => s.gallery);
   const letters = useContentStore((s) => s.letters);
   const timeline = useContentStore((s) => s.timeline);
@@ -77,8 +78,7 @@ export function Profile() {
             <div className="relative">
               <div className="grid h-28 w-28 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-glow">
                 {avatar ? (
-                   
-                  <img src={avatar} alt={name} className="h-full w-full object-cover" />
+                  <SmartImage src={avatar} alt={name} className="h-full w-full object-cover" />
                 ) : (
                   <UserIcon size={40} />
                 )}

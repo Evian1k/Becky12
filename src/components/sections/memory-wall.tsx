@@ -5,6 +5,7 @@ import { Heart, ImagePlus } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SmartImage } from "@/components/shared/smart-media";
 
 export function MemoryWall({ onOpenManager }: { onOpenManager: () => void }) {
   const gallery = useContentStore((s) => s.gallery);
@@ -81,8 +82,7 @@ export function MemoryWall({ onOpenManager }: { onOpenManager: () => void }) {
             style={{ top: item.top, left: item.left, width: item.width }}
           >
             <div className="polaroid rounded-sm">
-              { }
-              <img src={item.src} alt={item.caption} loading="lazy" className="block h-44 w-full object-cover" />
+              <SmartImage src={item.src} alt={item.caption} loading="lazy" className="block h-44 w-full object-cover" />
               <p className="mt-2 text-center font-script text-sm text-gray-700">{item.caption}</p>
             </div>
           </motion.div>

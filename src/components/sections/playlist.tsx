@@ -6,6 +6,7 @@ import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music2, Heart } f
 import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SmartImage, useSmartAudioSrc } from "@/components/shared/smart-media";
 import { cn } from "@/lib/utils";
 
 export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
@@ -20,6 +21,9 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const songs = playlist.songs;
+  const song = songs[current];
+  // Resolve idb:// URLs for audio — must be called before any useEffect that uses it
+  const resolvedAudioSrc = useSmartAudioSrc(song?.src || "");
 
   useEffect(() => {
     const audio = new Audio();
@@ -47,11 +51,11 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !songs[current]) return;
-    audio.src = songs[current].src;
+    if (!audio || !songs[current] || !resolvedAudioSrc) return;
+    audio.src = resolvedAudioSrc;
     audio.load();
     if (playing) audio.play().catch(() => setPlaying(false));
-  }, [current, songs]);
+  }, [current, songs, resolvedAudioSrc]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -61,8 +65,8 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
 
   const toggle = () => {
     const audio = audioRef.current;
-    if (!audio || songs.length === 0) return;
-    if (!audio.src && songs[current]) audio.src = songs[current].src;
+    if (!audio || songs.length === 0 || !resolvedAudioSrc) return;
+    if (!audio.src) audio.src = resolvedAudioSrc;
     if (playing) { audio.pause(); setPlaying(false); }
     else audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
   };
@@ -84,8 +88,6 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
     const sec = Math.floor(s % 60);
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
-
-  const song = songs[current];
 
   if (songs.length === 0) {
     return (
@@ -132,7 +134,7 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
             >
               {song.cover ? (
                  
-                <img src={song.cover} alt={song.title} className="h-full w-full object-cover" />
+                <SmartImage src={song.cover} alt={song.title} className="h-full w-full object-cover" />
               ) : (
                 <div className="grid h-full w-full place-items-center bg-gradient-to-br from-rose-500 to-pink-500 text-white">
                   <Music2 size={48} />
@@ -226,7 +228,7 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
                 <div className="relative h-12 w-12 overflow-hidden rounded-xl">
                   {s.cover ? (
                      
-                    <img src={s.cover} alt={s.title} className="h-full w-full object-cover" />
+                    <SmartImage src={s.cover} alt={s.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="grid h-full w-full place-items-center bg-gradient-to-br from-rose-500/40 to-pink-500/40 text-white">
                       <Music2 size={16} />

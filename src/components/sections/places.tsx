@@ -6,6 +6,7 @@ import { MapPin, Plus, Trash2, X, Calendar, Image as ImageIcon } from "lucide-re
 import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SmartImage } from "@/components/shared/smart-media";
 import { cn } from "@/lib/utils";
 
 function formatDate(iso: string) {
@@ -117,7 +118,7 @@ export function Places({ onOpenManager }: { onOpenManager: () => void }) {
                 {p.photos[0] && (
                   <div className="relative h-40 overflow-hidden">
                     { }
-                    <img src={p.photos[0]} alt={p.name} className="h-full w-full object-cover" />
+                    <SmartImage src={p.photos[0]} alt={p.name} className="h-full w-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs text-white backdrop-blur">
                       <MapPin size={10} /> {p.location || "Unknown"}
@@ -169,7 +170,7 @@ export function Places({ onOpenManager }: { onOpenManager: () => void }) {
                   {selectedPlace.photos.map((src, i) => (
                     <div key={i} className="relative aspect-square overflow-hidden rounded-xl">
                       { }
-                      <img src={src} alt="" className="h-full w-full object-cover" />
+                      <SmartImage src={src} alt="" className="h-full w-full object-cover" />
                     </div>
                   ))}
                 </div>

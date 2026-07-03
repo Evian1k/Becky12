@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
 import { uploadToStorage } from "@/lib/supabase-data";
+import { useResolvedSrc } from "@/hooks/use-resolved-src";
 import { PhotoManager } from "./photo-manager";
 import { cn } from "@/lib/utils";
 
@@ -165,7 +166,7 @@ export function ContentManager({ onClose }: { onClose: () => void }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[170] grid place-items-center bg-black/70 p-2 backdrop-blur-xl sm:p-4"
+      className="fixed inset-0 z-[170] grid place-items-stretch sm:place-items-center bg-black/70 p-0 backdrop-blur-xl sm:p-4"
       onClick={onClose}
     >
       <motion.div
@@ -174,7 +175,7 @@ export function ContentManager({ onClose }: { onClose: () => void }) {
         exit={{ scale: 0.95, y: 20, opacity: 0 }}
         transition={{ ease: [0.22, 1, 0.36, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="glass-strong flex h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl"
+        className="glass-strong flex h-[100vh] w-full max-w-5xl flex-col overflow-hidden rounded-none sm:h-[92vh] sm:rounded-3xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-rose-500/15 px-4 py-3 sm:px-6">
@@ -343,7 +344,7 @@ function VideosTab() {
             >
               <div className="flex gap-3 pr-12">
                 {v.thumbnail && (
-                  <video src={v.src} poster={v.thumbnail} className="h-16 w-24 rounded-lg object-cover" />
+                  <VideoThumb src={v.src} poster={v.thumbnail} />
                 )}
                 <div className="flex-1 space-y-2">
                   <Field label="Title" value={v.title} onChange={(val) => updateVideo(v.id, { title: val })} />
@@ -983,5 +984,19 @@ function SettingsTab() {
         </ItemCard>
       </div>
     </div>
+  );
+}
+
+function VideoThumb({ src, poster }: { src: string; poster: string }) {
+  const resolvedSrc = useResolvedSrc(src);
+  const resolvedPoster = useResolvedSrc(poster);
+  if (!resolvedSrc) return <div className="h-16 w-24 rounded-lg bg-rose-500/10" />;
+  return (
+    <video
+      src={resolvedSrc}
+      poster={resolvedPoster || undefined}
+      className="h-16 w-24 rounded-lg object-cover"
+      muted
+    />
   );
 }

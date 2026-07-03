@@ -7,6 +7,8 @@ import { useContentStore } from "@/lib/content-store";
 import { uploadToStorage } from "@/lib/supabase-data";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SmartImage, SmartVideo } from "@/components/shared/smart-media";
+import { useResolvedSrc } from "@/hooks/use-resolved-src";
 import { cn } from "@/lib/utils";
 
 export function VideoGallery({ onOpenManager }: { onOpenManager: () => void }) {
@@ -153,8 +155,7 @@ export function VideoGallery({ onOpenManager }: { onOpenManager: () => void }) {
               className="relative block aspect-video w-full"
             >
               {v.thumbnail ? (
-                 
-                <img src={v.thumbnail} alt={v.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                <SmartImage src={v.thumbnail} alt={v.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
               ) : (
                 <div className="grid h-full w-full place-items-center bg-gradient-to-br from-rose-500/20 to-pink-500/20 text-rose-500">
                   <Video size={32} />
@@ -215,13 +216,7 @@ export function VideoGallery({ onOpenManager }: { onOpenManager: () => void }) {
                 onClick={(e) => e.stopPropagation()}
                 className="w-full max-w-4xl"
               >
-                <video
-                  src={v.src}
-                  controls
-                  autoPlay
-                  className="w-full rounded-2xl"
-                  poster={v.thumbnail}
-                />
+                <FullscreenVideo src={v.src} poster={v.thumbnail} />
                 <div className="mt-4 text-center text-white">
                   <h3 className="font-serif-display text-xl font-bold">{v.title}</h3>
                   {v.description && <p className="mt-1 text-sm text-white/70">{v.description}</p>}
@@ -232,5 +227,20 @@ export function VideoGallery({ onOpenManager }: { onOpenManager: () => void }) {
         })()}
       </AnimatePresence>
     </SectionWrapper>
+  );
+}
+
+function FullscreenVideo({ src, poster }: { src: string; poster: string }) {
+  const resolvedSrc = useResolvedSrc(src);
+  const resolvedPoster = useResolvedSrc(poster);
+  if (!resolvedSrc) return <div className="aspect-video w-full rounded-2xl bg-black/40" />;
+  return (
+    <video
+      src={resolvedSrc}
+      poster={resolvedPoster || undefined}
+      controls
+      autoPlay
+      className="w-full rounded-2xl"
+    />
   );
 }

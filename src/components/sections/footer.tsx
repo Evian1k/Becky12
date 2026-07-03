@@ -6,7 +6,7 @@ import { useContentStore } from "@/lib/content-store";
 import { fireHearts } from "@/lib/confetti-helpers";
 
 export function Footer() {
-  const settings = useContentStore((s) => s.settings);
+  const settings = useContentStore((s) => s.settings) || {};
   const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (

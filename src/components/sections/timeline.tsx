@@ -5,6 +5,7 @@ import { Heart, Calendar } from "lucide-react";
 import { useContentStore } from "@/lib/content-store";
 import { SectionHeading, SectionWrapper } from "@/components/shared/section-heading";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SmartImage } from "@/components/shared/smart-media";
 import { cn } from "@/lib/utils";
 
 function formatDate(iso: string) {
@@ -64,8 +65,7 @@ export function Timeline({ onOpenManager }: { onOpenManager: () => void }) {
                     <motion.div whileHover={{ y: -4 }} className="glass-strong overflow-hidden rounded-3xl">
                       {event.image && (
                         <div className="relative h-44 overflow-hidden sm:h-52">
-                          { }
-                          <img src={event.image} alt={event.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 hover:scale-110" />
+                          <SmartImage src={event.image} alt={event.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 hover:scale-110" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                           <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs text-white backdrop-blur">
                             <span className="text-base">{event.emoji}</span>
