@@ -18,7 +18,9 @@ export function Gallery({ onOpenManager }: { onOpenManager: () => void }) {
   const [zoomed, setZoomed] = useState(false);
 
   const categories = ["All", ...gallery.categories];
-  const photos = category === "All" ? gallery.photos : gallery.photos.filter((p) => p.category === category);
+  // Filter out photos with empty/invalid src to prevent broken images
+  const allPhotos = gallery.photos.filter((p) => p.src && p.src.length > 5);
+  const photos = category === "All" ? allPhotos : allPhotos.filter((p) => p.category === category);
 
   const closeLightbox = useCallback(() => {
     setLightbox(null);

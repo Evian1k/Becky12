@@ -260,7 +260,7 @@ function PhotoThumb({ photo }: { photo: { src: string; caption: string } }) {
   const resolved = useResolvedSrc(photo.src);
   if (!resolved) return <div className="h-full w-full bg-rose-500/10" />;
   return (
-    // eslint-disable-next-line @next/next/no-img-element
+     
     <img
       src={resolved}
       alt={photo.caption || "Photo"}
@@ -273,7 +273,7 @@ function PreviewImage({ src, alt }: { src: string; alt: string }) {
   const resolved = useResolvedSrc(src);
   if (!resolved) return <div className="max-h-[85vh] max-w-[90vw]" />;
   return (
-    // eslint-disable-next-line @next/next/no-img-element
+     
     <img
       src={resolved}
       alt={alt}

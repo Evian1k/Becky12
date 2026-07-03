@@ -89,9 +89,30 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
 
   // Auto-cleanup: when storage is over 80% full, delete photos not viewed
   // in the last 30 days (favorites are always kept). Runs once on load.
+  // Also cleans up any broken blob: URLs from before the IndexedDB fix.
   useEffect(() => {
     if (!loaded) return;
     let cancelled = false;
+
+    // Clean up broken blob: URLs (from v5 and earlier — these die on refresh)
+    const state = useContentStore.getState();
+    const hasBrokenBlobs = state.gallery.photos.some(
+      (p) => p.src.startsWith("blob:") || p.src === "" || p.src.length < 5
+    );
+    if (hasBrokenBlobs) {
+      const cleanPhotos = state.gallery.photos.filter(
+        (p) => !p.src.startsWith("blob:") && p.src && p.src.length > 5
+      );
+      if (cleanPhotos.length !== state.gallery.photos.length) {
+        useContentStore.setState({
+          gallery: { ...state.gallery, photos: cleanPhotos },
+        });
+        console.log(
+          `Cleanup: removed ${state.gallery.photos.length - cleanPhotos.length} broken photo(s) from gallery.`
+        );
+      }
+    }
+
     (async () => {
       const est = await estimateStorage();
       if (cancelled || !est || est.quota === 0) return;

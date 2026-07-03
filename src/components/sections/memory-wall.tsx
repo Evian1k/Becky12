@@ -12,15 +12,19 @@ export function MemoryWall({ onOpenManager }: { onOpenManager: () => void }) {
   const notes = useContentStore((s) => s.notes);
 
   // Auto-build polaroids from gallery photos.
-  const polaroids = gallery.photos.slice(0, 8).map((p, i) => ({
-    id: `mw-${p.id}`,
-    src: p.src,
-    caption: p.caption || "us",
-    rotate: [-6, 5, -3, 8, -7, 4, -5, 3][i % 8],
-    top: `${5 + (i % 4) * 22}%`,
-    left: `${5 + (i * 17) % 75}%`,
-    width: "180px",
-  }));
+  // Filter out any photos with empty/invalid src to prevent broken images.
+  const polaroids = gallery.photos
+    .filter((p) => p.src && p.src.length > 5)
+    .slice(0, 8)
+    .map((p, i) => ({
+      id: `mw-${p.id}`,
+      src: p.src,
+      caption: p.caption || "us",
+      rotate: [-6, 5, -3, 8, -7, 4, -5, 3][i % 8],
+      top: `${5 + (i % 4) * 22}%`,
+      left: `${5 + (i * 17) % 75}%`,
+      width: "180px",
+    }));
 
   const stickies = notes.filter((n) => n.category === "love").slice(0, 4).map((n, i) => ({
     id: `mw-s-${n.id}`,

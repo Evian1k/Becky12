@@ -26,7 +26,7 @@ export function SmartImage({
     return <div className={className} aria-label={alt} role="img" />;
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
+     
     <img
       src={resolved}
       alt={alt}
