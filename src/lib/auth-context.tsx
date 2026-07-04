@@ -17,12 +17,13 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   isCloudMode: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
   updateProfile: (patch: Partial<User>) => Promise<{ error: string | null }>;
+  resendConfirmation: (email: string) => Promise<{ error: string | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [loadUserProfile]);
 
-  async function signUp(email: string, password: string, name: string): Promise<{ error: string | null }> {
+  async function signUp(email: string, password: string, name: string): Promise<{ error: string | null; needsConfirmation?: boolean }> {
     if (!isEmailAllowed(email)) {
       return { error: "This email is not on the invited list. Only the two of us can join." };
     }
@@ -106,14 +107,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { name } }, // passed to the handle_new_user trigger
+        options: { data: { name } },
       });
-      if (error) return { error: error.message };
-      // The handle_new_user trigger in schema.sql auto-creates a profile row
-      // when the auth user is created. We don't need to insert it here — and
-      // trying to do so would fail anyway because RLS only allows the owner
-      // to insert, but the user isn't fully authenticated yet.
-      return { error: null };
+      if (error) {
+        // User already registered — fall through to sign-in attempt
+        if (error.message.includes("already") || error.message.includes("registered")) {
+          // Try signing in directly
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) {
+            if (signInError.message.includes("Email not confirmed")) {
+              return { error: null, needsConfirmation: true };
+            }
+            return { error: signInError.message };
+          }
+          return { error: null };
+        }
+        return { error: error.message };
+      }
+      // If session is returned immediately, email confirmation is OFF — auto-sign-in
+      if (data.session) {
+        await loadUserProfile(data.user.id, data.user.email || "");
+        return { error: null };
+      }
+      // No session → email confirmation is ON → user needs to check inbox
+      return { error: null, needsConfirmation: true };
     }
     // Local mode
     const existing = localStorage.getItem(LOCAL_USER_KEY);
@@ -134,10 +151,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }
 
-  async function signIn(email: string, password: string): Promise<{ error: string | null }> {
+  async function signIn(email: string, password: string): Promise<{ error: string | null; needsConfirmation?: boolean }> {
     if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return { error: error.message };
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.includes("Email not confirmed") || error.message.includes("email_not_confirmed")) {
+          return { error: null, needsConfirmation: true };
+        }
+        return { error: error.message };
+      }
       return { error: null };
     }
     // Local mode
@@ -149,6 +171,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const userRaw = localStorage.getItem(LOCAL_USER_KEY);
     if (userRaw) setUser(JSON.parse(userRaw));
+    return { error: null };
+  }
+
+  async function resendConfirmation(email: string): Promise<{ error: string | null }> {
+    if (!isSupabaseConfigured || !supabase) {
+      return { error: "Not available in local mode." };
+    }
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+    if (error) return { error: error.message };
     return { error: null };
   }
 
@@ -212,6 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resetPassword,
         updatePassword,
         updateProfile,
+        resendConfirmation,
       }}
     >
       {children}
