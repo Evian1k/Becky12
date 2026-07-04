@@ -44,7 +44,18 @@ export function useJsonData<T>(filename: string, initial: T): { data: T; loading
 
 /**
  * Generates a unique id for new content items.
+ * Uses crypto.randomUUID() when available (all modern browsers) so the ID
+ * is a proper UUID that Supabase's uuid columns accept.
+ * Falls back to a synthetic UUID for older browsers.
  */
 export function makeId(prefix = "id"): string {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback: generate a UUID v4-like string
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
