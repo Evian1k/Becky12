@@ -118,30 +118,29 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
         subtitle={playlist.ourSongId ? "Featuring our song — the one that's ours." : "Songs that feel like us — every lyric a small love letter."}
       />
 
-      <div className="mt-12 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+      <div className="mt-12 grid gap-4 sm:gap-6 lg:grid-cols-[1fr_1.4fr]">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="glass-strong rounded-3xl p-6 sm:p-8"
+          className="glass-strong rounded-3xl p-4 sm:p-6 lg:p-8"
         >
-          <div className="relative mx-auto aspect-square w-full max-w-xs">
+          <div className="relative mx-auto aspect-square w-full max-w-[200px] sm:max-w-xs">
             <motion.div
               animate={{ rotate: playing ? 360 : 0 }}
               transition={{ duration: 20, ease: "linear", repeat: Infinity }}
               className="h-full w-full overflow-hidden rounded-full shadow-2xl"
             >
               {song.cover ? (
-                 
                 <SmartImage src={song.cover} alt={song.title} className="h-full w-full object-cover" />
               ) : (
                 <div className="grid h-full w-full place-items-center bg-gradient-to-br from-rose-500 to-pink-500 text-white">
-                  <Music2 size={48} />
+                  <Music2 size={36} />
                 </div>
               )}
             </motion.div>
-            <div className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background ring-4 ring-rose-500/30" />
+            <div className="absolute left-1/2 top-1/2 h-5 w-5 sm:h-6 sm:w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background ring-4 ring-rose-500/30" />
             {playing && (
               <motion.div
                 animate={{ scale: [1, 1.1], opacity: [0.5, 0] }}
@@ -151,15 +150,15 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
             )}
           </div>
 
-          <div className="mt-6 text-center">
-            <h3 className="font-serif-display text-2xl font-bold flex items-center justify-center gap-2">
-              {song.title}
+          <div className="mt-4 sm:mt-6 text-center">
+            <h3 className="font-serif-display text-lg sm:text-2xl font-bold flex items-center justify-center gap-2">
+              <span className="truncate">{song.title}</span>
               {playlist.ourSongId === song.id && (
-                <Heart size={16} className="text-rose-500" fill="currentColor" strokeWidth={0} />
+                <Heart size={14} className="text-rose-500 shrink-0" fill="currentColor" strokeWidth={0} />
               )}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">{song.artist || "Unknown artist"}</p>
-            {song.album && <p className="mt-0.5 text-xs text-rose-500/70">{song.album}</p>}
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground truncate">{song.artist || "Unknown artist"}</p>
+            {song.album && <p className="mt-0.5 text-[10px] sm:text-xs text-rose-500/70 truncate">{song.album}</p>}
           </div>
 
           <div className="mt-6">
@@ -173,19 +172,19 @@ export function Playlist({ onOpenManager }: { onOpenManager: () => void }) {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-4">
-            <button onClick={prev} aria-label="Previous" className="grid h-10 w-10 place-items-center rounded-full text-foreground/70 hover:bg-rose-500/10 hover:text-rose-500">
-              <SkipBack size={18} fill="currentColor" />
+          <div className="mt-4 sm:mt-6 flex items-center justify-center gap-3 sm:gap-4">
+            <button onClick={prev} aria-label="Previous" className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full text-foreground/70 hover:bg-rose-500/10 hover:text-rose-500">
+              <SkipBack size={16} fill="currentColor" />
             </button>
             <button
               onClick={toggle}
               aria-label={playing ? "Pause" : "Play"}
-              className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-glow transition-transform hover:scale-105"
+              className="grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-glow transition-transform hover:scale-105"
             >
-              {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
+              {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
             </button>
-            <button onClick={next} aria-label="Next" className="grid h-10 w-10 place-items-center rounded-full text-foreground/70 hover:bg-rose-500/10 hover:text-rose-500">
-              <SkipForward size={18} fill="currentColor" />
+            <button onClick={next} aria-label="Next" className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full text-foreground/70 hover:bg-rose-500/10 hover:text-rose-500">
+              <SkipForward size={16} fill="currentColor" />
             </button>
           </div>
 

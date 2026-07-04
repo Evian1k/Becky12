@@ -24,6 +24,21 @@ import type {
   Settings,
 } from "@/lib/types";
 import { makeId } from "@/hooks/use-json-data";
+import {
+  dbInsertPhoto, dbUpdatePhoto, dbDeletePhoto,
+  dbInsertVideo, dbDeleteVideo,
+  dbInsertSong, dbDeleteSong,
+  dbInsertLetter, dbDeleteLetter,
+  dbInsertQuote, dbDeleteQuote,
+  dbInsertTimelineEvent, dbDeleteTimelineEvent,
+  dbInsertJournalEntry, dbDeleteJournalEntry,
+  dbInsertBucketItem, dbDeleteBucketItem,
+  dbInsertPlace, dbDeletePlace,
+  dbInsertSpecialDate, dbDeleteSpecialDate,
+  dbInsertReason, dbDeleteReason,
+  dbInsertDream, dbDeleteDream,
+  dbInsertNotification,
+} from "@/lib/supabase-writes";
 
 const emptyGallery: GalleryData = {
   photos: [],
@@ -94,6 +109,8 @@ type ContentState = {
   achievements: Achievement[];
 
   loaded: boolean;
+  currentUserId: string | null;
+  setUserId: (id: string | null) => void;
 
   // Settings
   setSettings: (patch: Partial<Settings>) => void;
@@ -216,13 +233,19 @@ export const useContentStore = create<ContentState>()(
       notifications: [],
       achievements: defaultAchievements,
       loaded: false,
+      currentUserId: null,
+
+      setUserId: (id) => set({ currentUserId: id }),
 
       setSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
       addPhoto: (photo) =>
         set((s) => {
           const now = new Date().toISOString();
-          const photos = [...s.gallery.photos, { ...photo, id: makeId("p"), uploadedAt: now, lastViewed: now }];
+          const newPhoto = { ...photo, id: makeId("p"), uploadedAt: now, lastViewed: now };
+          const photos = [...s.gallery.photos, newPhoto];
+          // Sync to Supabase (async, non-blocking)
+          if (s.currentUserId) dbInsertPhoto(newPhoto, s.currentUserId);
           return {
             gallery: { ...s.gallery, photos },
             notifications: s.settings.notificationsEnabled
@@ -233,60 +256,85 @@ export const useContentStore = create<ContentState>()(
       addPhotos: (photos) =>
         set((s) => {
           const now = new Date().toISOString();
+          const newPhotos = photos.map((p) => ({ ...p, id: makeId("p"), uploadedAt: now, lastViewed: now }));
+          // Sync each to Supabase
+          if (s.currentUserId) newPhotos.forEach((p) => dbInsertPhoto(p, s.currentUserId));
           return {
             gallery: {
               ...s.gallery,
-              photos: [...s.gallery.photos, ...photos.map((p) => ({ ...p, id: makeId("p"), uploadedAt: now, lastViewed: now }))],
+              photos: [...s.gallery.photos, ...newPhotos],
             },
           };
         }),
       updatePhoto: (id, patch) =>
-        set((s) => ({
-          gallery: {
-            ...s.gallery,
-            photos: s.gallery.photos.map((p) => (p.id === id ? { ...p, ...patch } : p)),
-          },
-        })),
+        set((s) => {
+          if (s.currentUserId) dbUpdatePhoto(id, patch);
+          return {
+            gallery: {
+              ...s.gallery,
+              photos: s.gallery.photos.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+            },
+          };
+        }),
       removePhoto: (id) =>
-        set((s) => ({
-          gallery: { ...s.gallery, photos: s.gallery.photos.filter((p) => p.id !== id) },
-        })),
+        set((s) => {
+          if (s.currentUserId) dbDeletePhoto(id);
+          return { gallery: { ...s.gallery, photos: s.gallery.photos.filter((p) => p.id !== id) } };
+        }),
       reorderPhotos: (fromId, toId) =>
         set((s) => ({ gallery: { ...s.gallery, photos: reorder(s.gallery.photos, fromId, toId) } })),
 
       addTimelineEvent: (e) =>
-        set((s) => ({
-          timeline: [...s.timeline, { ...e, id: makeId("tl") }],
-          notifications: s.settings.notificationsEnabled
-            ? [{ id: makeId("n"), type: "timeline" as const, title: "New memory added", body: e.title, date: new Date().toISOString(), read: false }, ...s.notifications]
-            : s.notifications,
-        })),
+        set((s) => {
+          const newEvent = { ...e, id: makeId("tl") };
+          if (s.currentUserId) dbInsertTimelineEvent(newEvent, s.currentUserId);
+          return {
+            timeline: [...s.timeline, newEvent],
+            notifications: s.settings.notificationsEnabled
+              ? [{ id: makeId("n"), type: "timeline" as const, title: "New memory added", body: e.title, date: new Date().toISOString(), read: false }, ...s.notifications]
+              : s.notifications,
+          };
+        }),
       updateTimelineEvent: (id, patch) =>
         set((s) => ({ timeline: s.timeline.map((e) => (e.id === id ? { ...e, ...patch } : e)) })),
       removeTimelineEvent: (id) =>
-        set((s) => ({ timeline: s.timeline.filter((e) => e.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteTimelineEvent(id);
+          return { timeline: s.timeline.filter((e) => e.id !== id) };
+        }),
       reorderTimeline: (fromId, toId) =>
         set((s) => ({ timeline: reorder(s.timeline, fromId, toId) })),
 
       addLetter: (l) =>
-        set((s) => ({
-          letters: [...s.letters, { ...l, id: makeId("lt") }],
-          notifications: s.settings.notificationsEnabled
-            ? [{ id: makeId("n"), type: "letter" as const, title: "New letter received", body: l.preview || l.recipient, date: new Date().toISOString(), read: false }, ...s.notifications]
-            : s.notifications,
-        })),
+        set((s) => {
+          const newLetter = { ...l, id: makeId("lt") };
+          if (s.currentUserId) dbInsertLetter(newLetter, s.currentUserId);
+          return {
+            letters: [...s.letters, newLetter],
+            notifications: s.settings.notificationsEnabled
+              ? [{ id: makeId("n"), type: "letter" as const, title: "New letter received", body: l.preview || l.recipient, date: new Date().toISOString(), read: false }, ...s.notifications]
+              : s.notifications,
+          };
+        }),
       updateLetter: (id, patch) =>
         set((s) => ({ letters: s.letters.map((l) => (l.id === id ? { ...l, ...patch } : l)) })),
       removeLetter: (id) =>
-        set((s) => ({ letters: s.letters.filter((l) => l.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteLetter(id);
+          return { letters: s.letters.filter((l) => l.id !== id) };
+        }),
 
       addSong: (song) =>
-        set((s) => ({
-          playlist: { ...s.playlist, songs: [...s.playlist.songs, { ...song, id: makeId("s") }] },
-          notifications: s.settings.notificationsEnabled
-            ? [{ id: makeId("n"), type: "song" as const, title: "New song added", body: song.title, date: new Date().toISOString(), read: false }, ...s.notifications]
-            : s.notifications,
-        })),
+        set((s) => {
+          const newSong = { ...song, id: makeId("s") };
+          if (s.currentUserId) dbInsertSong(newSong, s.currentUserId);
+          return {
+            playlist: { ...s.playlist, songs: [...s.playlist.songs, newSong] },
+            notifications: s.settings.notificationsEnabled
+              ? [{ id: makeId("n"), type: "song" as const, title: "New song added", body: song.title, date: new Date().toISOString(), read: false }, ...s.notifications]
+              : s.notifications,
+          };
+        }),
       updateSong: (id, patch) =>
         set((s) => ({
           playlist: {
@@ -295,66 +343,111 @@ export const useContentStore = create<ContentState>()(
           },
         })),
       removeSong: (id) =>
-        set((s) => ({
-          playlist: {
-            ...s.playlist,
-            songs: s.playlist.songs.filter((x) => x.id !== id),
-            ourSongId: s.playlist.ourSongId === id ? null : s.playlist.ourSongId,
-          },
-        })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteSong(id);
+          return {
+            playlist: {
+              ...s.playlist,
+              songs: s.playlist.songs.filter((x) => x.id !== id),
+              ourSongId: s.playlist.ourSongId === id ? null : s.playlist.ourSongId,
+            },
+          };
+        }),
       setOurSong: (id) => set((s) => ({ playlist: { ...s.playlist, ourSongId: id } })),
 
       addQuote: (q) =>
-        set((s) => ({
-          quotes: [...s.quotes, { ...q, id: makeId("q") }],
-          notifications: s.settings.notificationsEnabled
-            ? [{ id: makeId("n"), type: "quote" as const, title: "New quote added", body: q.text.slice(0, 60), date: new Date().toISOString(), read: false }, ...s.notifications]
-            : s.notifications,
-        })),
+        set((s) => {
+          const newQuote = { ...q, id: makeId("q") };
+          if (s.currentUserId) dbInsertQuote(newQuote, s.currentUserId);
+          return {
+            quotes: [...s.quotes, newQuote],
+            notifications: s.settings.notificationsEnabled
+              ? [{ id: makeId("n"), type: "quote" as const, title: "New quote added", body: q.text.slice(0, 60), date: new Date().toISOString(), read: false }, ...s.notifications]
+              : s.notifications,
+          };
+        }),
       updateQuote: (id, patch) =>
         set((s) => ({ quotes: s.quotes.map((q) => (q.id === id ? { ...q, ...patch } : q)) })),
       removeQuote: (id) =>
-        set((s) => ({ quotes: s.quotes.filter((q) => q.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteQuote(id);
+          return { quotes: s.quotes.filter((q) => q.id !== id) };
+        }),
 
       addBucketItem: (b) =>
-        set((s) => ({ bucketList: [...s.bucketList, { ...b, id: makeId("b") }] })),
+        set((s) => {
+          const newItem = { ...b, id: makeId("b") };
+          if (s.currentUserId) dbInsertBucketItem(newItem, s.currentUserId);
+          return { bucketList: [...s.bucketList, newItem] };
+        }),
       updateBucketItem: (id, patch) =>
         set((s) => ({ bucketList: s.bucketList.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
       removeBucketItem: (id) =>
-        set((s) => ({ bucketList: s.bucketList.filter((b) => b.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteBucketItem(id);
+          return { bucketList: s.bucketList.filter((b) => b.id !== id) };
+        }),
 
       addDream: (d) =>
-        set((s) => ({ futureDreams: [...s.futureDreams, { ...d, id: makeId("d") }] })),
+        set((s) => {
+          const newDream = { ...d, id: makeId("d") };
+          if (s.currentUserId) dbInsertDream(newDream, s.currentUserId);
+          return { futureDreams: [...s.futureDreams, newDream] };
+        }),
       updateDream: (id, patch) =>
         set((s) => ({ futureDreams: s.futureDreams.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
       removeDream: (id) =>
-        set((s) => ({ futureDreams: s.futureDreams.filter((d) => d.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteDream(id);
+          return { futureDreams: s.futureDreams.filter((d) => d.id !== id) };
+        }),
 
       addReason: (r) =>
-        set((s) => ({ reasons: [...s.reasons, { ...r, id: makeId("r") }] })),
+        set((s) => {
+          const newReason = { ...r, id: makeId("r") };
+          if (s.currentUserId) dbInsertReason(newReason, s.currentUserId);
+          return { reasons: [...s.reasons, newReason] };
+        }),
       updateReason: (id, patch) =>
         set((s) => ({ reasons: s.reasons.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
       removeReason: (id) =>
-        set((s) => ({ reasons: s.reasons.filter((r) => r.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteReason(id);
+          return { reasons: s.reasons.filter((r) => r.id !== id) };
+        }),
 
       addSpecialDate: (d) =>
-        set((s) => ({ specialDates: [...s.specialDates, { ...d, id: makeId("sd") }] })),
+        set((s) => {
+          const newDate = { ...d, id: makeId("sd") };
+          if (s.currentUserId) dbInsertSpecialDate(newDate, s.currentUserId);
+          return { specialDates: [...s.specialDates, newDate] };
+        }),
       updateSpecialDate: (id, patch) =>
         set((s) => ({ specialDates: s.specialDates.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
       removeSpecialDate: (id) =>
-        set((s) => ({ specialDates: s.specialDates.filter((d) => d.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteSpecialDate(id);
+          return { specialDates: s.specialDates.filter((d) => d.id !== id) };
+        }),
 
       addPlace: (p) =>
-        set((s) => ({
-          places: [...s.places, { ...p, id: makeId("pl") }],
-          notifications: s.settings.notificationsEnabled
-            ? [{ id: makeId("n"), type: "timeline" as const, title: "New place added", body: p.name, date: new Date().toISOString(), read: false }, ...s.notifications]
-            : s.notifications,
-        })),
+        set((s) => {
+          const newPlace = { ...p, id: makeId("pl") };
+          if (s.currentUserId) dbInsertPlace(newPlace, s.currentUserId);
+          return {
+            places: [...s.places, newPlace],
+            notifications: s.settings.notificationsEnabled
+              ? [{ id: makeId("n"), type: "timeline" as const, title: "New place added", body: p.name, date: new Date().toISOString(), read: false }, ...s.notifications]
+              : s.notifications,
+          };
+        }),
       updatePlace: (id, patch) =>
         set((s) => ({ places: s.places.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
       removePlace: (id) =>
-        set((s) => ({ places: s.places.filter((p) => p.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeletePlace(id);
+          return { places: s.places.filter((p) => p.id !== id) };
+        }),
 
       addNote: (n) =>
         set((s) => ({ notes: [...s.notes, { ...n, id: makeId("n") }] })),
@@ -364,28 +457,42 @@ export const useContentStore = create<ContentState>()(
         set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
 
       addVideo: (v) =>
-        set((s) => ({
-          videos: [...s.videos, { ...v, id: makeId("v") }],
-          notifications: s.settings.notificationsEnabled
-            ? [{ id: makeId("n"), type: "video" as const, title: "New video added", body: v.title, date: new Date().toISOString(), read: false }, ...s.notifications]
-            : s.notifications,
-        })),
+        set((s) => {
+          const newVideo = { ...v, id: makeId("v") };
+          if (s.currentUserId) dbInsertVideo(newVideo, s.currentUserId);
+          return {
+            videos: [...s.videos, newVideo],
+            notifications: s.settings.notificationsEnabled
+              ? [{ id: makeId("n"), type: "video" as const, title: "New video added", body: v.title, date: new Date().toISOString(), read: false }, ...s.notifications]
+              : s.notifications,
+          };
+        }),
       updateVideo: (id, patch) =>
         set((s) => ({ videos: s.videos.map((v) => (v.id === id ? { ...v, ...patch } : v)) })),
       removeVideo: (id) =>
-        set((s) => ({ videos: s.videos.filter((v) => v.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteVideo(id);
+          return { videos: s.videos.filter((v) => v.id !== id) };
+        }),
 
       addJournalEntry: (j) =>
-        set((s) => ({
-          journal: [...s.journal, { ...j, id: makeId("j") }],
-          notifications: s.settings.notificationsEnabled
-            ? [{ id: makeId("n"), type: "journal" as const, title: "New journal entry", body: j.title || "Untitled entry", date: new Date().toISOString(), read: false }, ...s.notifications]
-            : s.notifications,
-        })),
+        set((s) => {
+          const newEntry = { ...j, id: makeId("j") };
+          if (s.currentUserId) dbInsertJournalEntry(newEntry, s.currentUserId);
+          return {
+            journal: [...s.journal, newEntry],
+            notifications: s.settings.notificationsEnabled
+              ? [{ id: makeId("n"), type: "journal" as const, title: "New journal entry", body: j.title || "Untitled entry", date: new Date().toISOString(), read: false }, ...s.notifications]
+              : s.notifications,
+          };
+        }),
       updateJournalEntry: (id, patch) =>
         set((s) => ({ journal: s.journal.map((j) => (j.id === id ? { ...j, ...patch } : j)) })),
       removeJournalEntry: (id) =>
-        set((s) => ({ journal: s.journal.filter((j) => j.id !== id) })),
+        set((s) => {
+          if (s.currentUserId) dbDeleteJournalEntry(id);
+          return { journal: s.journal.filter((j) => j.id !== id) };
+        }),
 
       addNotification: (n) =>
         set((s) => ({

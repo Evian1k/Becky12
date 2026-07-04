@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase, isSupabaseConfigured, allowedEmails } from "@/lib/supabase-client";
+import { useContentStore } from "@/lib/content-store";
 
 type User = {
   id: string;
@@ -47,7 +48,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadUserProfile = useCallback(async (id: string, email: string) => {
-    if (!supabase) return;
+    // Set the user ID in the content store so writes sync to Supabase
+    useContentStore.getState().setUserId(id);
+
+    if (!supabase) {
+      // Local mode — just set a minimal user
+      setUser({ id, email, name: email.split("@")[0], avatar: "", bio: "" });
+      return;
+    }
     const { data } = await supabase.from("profiles").select("*").eq("id", id).single();
     if (data) {
       setUser({
@@ -148,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(newUser));
     localStorage.setItem(LOCAL_PASSWORD_KEY, JSON.stringify({ email, password }));
     setUser(newUser);
+    useContentStore.getState().setUserId(newUser.id);
     return { error: null };
   }
 
@@ -170,7 +179,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: "Wrong email or password." };
     }
     const userRaw = localStorage.getItem(LOCAL_USER_KEY);
-    if (userRaw) setUser(JSON.parse(userRaw));
+    if (userRaw) {
+      const u = JSON.parse(userRaw);
+      setUser(u);
+      useContentStore.getState().setUserId(u.id);
+    }
     return { error: null };
   }
 
@@ -191,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
     }
     setUser(null);
+    useContentStore.getState().setUserId(null);
     localStorage.removeItem(LOCAL_USER_KEY);
     localStorage.removeItem(LOCAL_PASSWORD_KEY);
   }
